@@ -33,7 +33,7 @@ src/
   interp/    # reference interpreter: reject + diagnose modes (normative semantics)
   symex/     # path enumeration + QF_BV solving   [cargo feature `symex`]
   codegen/   # backends: lua, c99 (+ ebpf variant), p4
-  cli/       # pakeles subcommands: run, diff-tshark, vectors, lint, viz, coverage, doc
+  cli/       # pakeles subcommands: run, diff <oracle>, testgen, lint, viz, cov, doc, gen <target>
 testdata/    # language-neutral fixtures: pcaps, IR files, expected-parse JSON
 ```
 
@@ -69,8 +69,8 @@ Cheap, high-leverage, attached to the slice where their machinery is naturally p
 
 Every slice ends with a working, demoable artifact.
 
-1. **The spine.** Devcontainer + repo scaffolding; proto schema covering format + automaton essentials; builder; reference interpreter (reject mode); Ethernet→IPv4→TCP; `pakeles diff-tshark` green on a real pcap; Graphviz visualizer.
-2. **The oracle factory.** Symbolic engine: path enumeration + QF_BV constraints → `vectors`, `lint`, feasibility metrics. Solver chosen here empirically behind the trait (Bitwuzla vs Z3 vs SMT-LIB pipe). Pcap coverage reporter.
+1. **The spine.** Devcontainer + repo scaffolding; proto schema covering format + automaton essentials; builder; reference interpreter (reject mode); Ethernet→IPv4→TCP; `pakeles diff tshark` green on a real pcap; Graphviz visualizer.
+2. **The oracle factory.** Symbolic engine: path enumeration + QF_BV constraints → `testgen`, `lint`, feasibility metrics. Solver: z3 crate first behind a thin trait (decided 2026-07-19; solver-agnostic benchmarking is the long-term dream). Pcap coverage reporter (`cov`).
 3. **First backend.** Wireshark Lua generator + diagnose mode + annotation layer, conformance-tested by slice-2 vectors. Doc generator. Natural go-public decision point.
 4. **Datapath.** C99 emitter + eBPF variant, differentially tested against the interpreter via generated vectors, including execution under **rbpf** as a userspace eBPF harness (no root, no kernel). "Provably agreeing artifacts" becomes mechanically true here.
 5. **The ceiling proof.** P4 emission + BMv2 differential. VLAN/MPLS/header-stack protocols land along the way as the automaton features they exercise arrive.

@@ -24,7 +24,7 @@ the pinned dev image (Ubuntu 24.04 + Rust, protoc, buf, tshark 4.2, graphviz):
 
 ```sh
 ./dev.sh cargo test                                        # full suite
-./dev.sh cargo run -- diff-tshark --pcap testdata/basic.pcap
+./dev.sh cargo run -- diff tshark --pcap testdata/basic.pcap
 ./dev.sh cargo run -- run --pcap testdata/basic.pcap       # JSON per packet
 ./dev.sh cargo run -- viz | dot -Tsvg -o graph.svg         # parse graph
 ./dev.sh cargo run -- export-ir                            # the IR itself

@@ -32,12 +32,11 @@ enum Command {
         #[arg(long)]
         ir: Option<PathBuf>,
     },
-    /// Diff annotated fields against tshark; exit 1 on mismatch.
-    DiffTshark {
-        #[arg(long)]
-        pcap: PathBuf,
-        #[arg(long)]
-        ir: Option<PathBuf>,
+    /// Diff our parse against a reference oracle; exit 1 on mismatch.
+    Diff {
+        /// Which oracle to diff against (more arrive with later slices).
+        #[command(subcommand)]
+        oracle: Oracle,
     },
     /// Write the built-in example IR (the file other tools consume).
     ExportIr {
@@ -46,6 +45,17 @@ enum Command {
         out: PathBuf,
         #[arg(long)]
         binary: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum Oracle {
+    /// Compare annotated numeric fields against `tshark -T json`.
+    Tshark {
+        #[arg(long)]
+        pcap: PathBuf,
+        #[arg(long)]
+        ir: Option<PathBuf>,
     },
 }
 
@@ -108,7 +118,9 @@ pub fn main_with(args: &[&str]) -> Result<i32> {
             print!("{}", crate::viz::to_dot(&load_ir(&ir)?));
             Ok(0)
         }
-        Command::DiffTshark { pcap, ir } => {
+        Command::Diff {
+            oracle: Oracle::Tshark { pcap, ir },
+        } => {
             let report = crate::oracle::diff_pcap(&load_ir(&ir)?, &pcap)?;
             println!(
                 "{} packets, {} fields compared, {} mismatches",
@@ -158,7 +170,8 @@ mod tests {
             eprintln!("skipping: tshark not available");
             return;
         }
-        let code = main_with(&["pakeles", "diff-tshark", "--pcap", "testdata/basic.pcap"]).unwrap();
+        let code =
+            main_with(&["pakeles", "diff", "tshark", "--pcap", "testdata/basic.pcap"]).unwrap();
         assert_eq!(code, 0);
     }
 
