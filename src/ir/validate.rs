@@ -35,6 +35,28 @@ pub fn validate(ir: &pb::Ir) -> Result<(), Vec<String>> {
                 Some(_) => {}
                 None => errs.push(format!("field `{}.{}` has no width", ht.name, f.name)),
             }
+            if let Some(d) = &f.display {
+                let mut label_vals = std::collections::HashSet::new();
+                for vl in &d.value_labels {
+                    if !label_vals.insert(vl.value) {
+                        errs.push(format!(
+                            "field `{}.{}` duplicate value label {}",
+                            ht.name, f.name, vl.value
+                        ));
+                    }
+                    if let Some(pb::field_width::Width::Bits(w)) =
+                        f.width.as_ref().and_then(|x| x.width.as_ref())
+                    {
+                        let max = if *w == 64 { u64::MAX } else { (1u64 << w) - 1 };
+                        if vl.value > max {
+                            errs.push(format!(
+                                "field `{}.{}` value label {} exceeds {w}-bit width",
+                                ht.name, f.name, vl.value
+                            ));
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -134,12 +156,22 @@ pub fn validate(ir: &pb::Ir) -> Result<(), Vec<String>> {
 
     for s in &parser.states {
         let ctx = format!("state `{}`", s.name);
-        let check_target = |t: &pb::Target, errs: &mut Vec<String>| {
-            if let Some(pb::target::Kind::State(name)) = &t.kind {
+        let check_target = |t: &pb::Target, errs: &mut Vec<String>| match &t.kind {
+            Some(pb::target::Kind::State(name)) => {
                 if !states.contains(name.as_str()) {
                     errs.push(format!("{ctx}: unknown state `{name}`"));
                 }
             }
+            Some(pb::target::Kind::Reject(r)) => {
+                if let Some(sev) = r.annotations.get("severity") {
+                    if sev != "error" && sev != "info" {
+                        errs.push(format!(
+                            "{ctx}: reject severity `{sev}` (must be `error` or `info`)"
+                        ));
+                    }
+                }
+            }
+            _ => {}
         };
         match s.transition.as_ref().and_then(|t| t.kind.as_ref()) {
             None => errs.push(format!("{ctx}: no transition")),
@@ -466,6 +498,47 @@ mod tests {
         let mut ir = tiny();
         with_select(&mut ir, vec![field_ref("ghost", "f")], vec![]);
         assert_err_contains(&ir, "unknown header instance `ghost`");
+    }
+
+    #[test]
+    fn rejects_bad_severity() {
+        let mut ir = tiny();
+        parser(&mut ir).states[0].transition = Some(pb::Transition {
+            kind: Some(pb::transition::Kind::Direct(pb::Target {
+                kind: Some(pb::target::Kind::Reject(pb::Reject {
+                    reason: "r".into(),
+                    annotations: [("severity".to_string(), "fatal".to_string())].into(),
+                })),
+            })),
+        });
+        assert_err_contains(&ir, "reject severity `fatal`");
+    }
+
+    #[test]
+    fn rejects_bad_value_labels() {
+        let mut ir = tiny();
+        parser(&mut ir).header_types.push(pb::HeaderType {
+            name: "h".into(),
+            fields: vec![pb::Field {
+                name: "f".into(),
+                width: Some(pb::FieldWidth {
+                    width: Some(pb::field_width::Width::Bits(4)),
+                }),
+                display: Some(pb::Display {
+                    name: "F".into(),
+                    value_labels: vec![
+                        pb::ValueLabel { value: 3, label: "a".into() },
+                        pb::ValueLabel { value: 3, label: "b".into() },
+                        pb::ValueLabel { value: 99, label: "c".into() },
+                    ],
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }],
+            ..Default::default()
+        });
+        assert_err_contains(&ir, "duplicate value label 3");
+        assert_err_contains(&ir, "value label 99 exceeds 4-bit width");
     }
 
     #[test]

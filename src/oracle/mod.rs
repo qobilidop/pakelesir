@@ -33,6 +33,31 @@ pub(crate) fn normalize(raw: &str) -> Option<u64> {
     }
 }
 
+/// Format-aware normalization: addresses become their big-endian
+/// numeric value, everything else falls back to `normalize`.
+pub(crate) fn normalize_typed(raw: &str, format: pb::DisplayFormat) -> Option<u64> {
+    match format {
+        pb::DisplayFormat::Ipv4 => {
+            let octets: Vec<u64> = raw.split('.').map(|p| p.parse().ok()).collect::<Option<_>>()?;
+            if octets.len() != 4 || octets.iter().any(|o| *o > 255) {
+                return None;
+            }
+            Some(octets.iter().fold(0, |acc, o| (acc << 8) | o))
+        }
+        pb::DisplayFormat::Ether => {
+            let parts: Vec<u64> = raw
+                .split(':')
+                .map(|p| u64::from_str_radix(p, 16).ok())
+                .collect::<Option<_>>()?;
+            if parts.len() != 6 || parts.iter().any(|p| *p > 255) {
+                return None;
+            }
+            Some(parts.iter().fold(0, |acc, p| (acc << 8) | p))
+        }
+        _ => normalize(raw),
+    }
+}
+
 /// Find `key` in the layer object named by `key`'s prefix (before the
 /// first '.'), searching nested objects; arrays take the first element.
 pub(crate) fn lookup<'a>(layers: &'a serde_json::Value, key: &str) -> Option<&'a str> {
@@ -101,20 +126,23 @@ pub fn diff_pcap(ir: &pb::Ir, pcap: &Path) -> Result<DiffReport> {
                 .and_then(|p| p.header_types.iter().find(|h| h.name == header.header_type));
             let Some(ht) = ht else { continue };
             for field in &header.fields {
-                let Some(key) = ht
-                    .fields
-                    .iter()
-                    .find(|f| f.name == field.name)
-                    .and_then(|f| f.annotations.get("tshark.key"))
-                else {
+                let Some(ir_field) = ht.fields.iter().find(|f| f.name == field.name) else {
                     continue;
                 };
+                let Some(key) = ir_field.annotations.get("tshark.key") else {
+                    continue;
+                };
+                let format = ir_field
+                    .display
+                    .as_ref()
+                    .and_then(|d| pb::DisplayFormat::try_from(d.format).ok())
+                    .unwrap_or(pb::DisplayFormat::Unspecified);
                 let FieldValue::Uint(ours) = field.value else {
                     continue;
                 };
                 report.compared += 1;
                 let raw = lookup(layers, key);
-                let theirs = raw.and_then(normalize);
+                let theirs = raw.and_then(|r| normalize_typed(r, format));
                 if theirs != Some(ours) {
                     report.mismatches.push(FieldDiff {
                         packet: idx,
@@ -140,6 +168,19 @@ mod tests {
         assert_eq!(normalize("443"), Some(443));
         assert_eq!(normalize("10.0.0.1"), None);
         assert_eq!(normalize("aa:bb"), None);
+    }
+
+    #[test]
+    fn normalizes_addresses_by_format() {
+        use crate::ir::pb::DisplayFormat as F;
+        assert_eq!(normalize_typed("10.0.0.1", F::Ipv4), Some(0x0A000001));
+        assert_eq!(normalize_typed("256.0.0.1", F::Ipv4), None);
+        assert_eq!(
+            normalize_typed("aa:bb:cc:dd:ee:ff", F::Ether),
+            Some(0xAABBCCDDEEFF)
+        );
+        assert_eq!(normalize_typed("aa:bb", F::Ether), None);
+        assert_eq!(normalize_typed("443", F::Dec), Some(443));
     }
 
     #[test]
@@ -172,8 +213,8 @@ mod tests {
         .unwrap();
         assert_eq!(report.packets, 4);
         assert_eq!(
-            report.compared, 16,
-            "8 annotated fields x 2 accepted packets"
+            report.compared, 24,
+            "12 annotated fields x 2 accepted packets"
         );
         assert!(
             report.mismatches.is_empty(),

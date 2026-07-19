@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN echo "wireshark-common wireshark-common/install-setuid boolean false" | debconf-set-selections \
  && apt-get update \
  && apt-get install -y --no-install-recommends \
-      ca-certificates curl build-essential \
+      ca-certificates curl build-essential git \
       protobuf-compiler tshark graphviz \
       libz3-dev libclang-dev \
  && rm -rf /var/lib/apt/lists/*

@@ -30,7 +30,34 @@ message HeaderType {
 message Field {
   string name = 1;
   FieldWidth width = 2;
+  // Presentation only — no execution path may branch on it.
+  Display display = 3;
   map<string, string> annotations = 15;
+}
+
+// Typed presentation metadata. Explicitly non-semantic: interpreters
+// and datapath backends ignore it entirely; dissector/doc backends
+// consume it.
+message Display {
+  string name = 1;
+  DisplayFormat format = 2;
+  repeated ValueLabel value_labels = 3;
+  string doc = 4;
+}
+
+enum DisplayFormat {
+  DISPLAY_FORMAT_UNSPECIFIED = 0;
+  DISPLAY_FORMAT_DEC = 1;
+  DISPLAY_FORMAT_HEX = 2;
+  DISPLAY_FORMAT_BIN = 3;
+  DISPLAY_FORMAT_IPV4 = 4;
+  DISPLAY_FORMAT_IPV6 = 5;
+  DISPLAY_FORMAT_ETHER = 6;
+}
+
+message ValueLabel {
+  uint64 value = 1;
+  string label = 2;
 }
 
 message FieldWidth {
@@ -103,6 +130,10 @@ message Accept {}
 
 message Reject {
   string reason = 1;
+  // Recognized: "severity" = "error" (default) | "info". `info` marks
+  // a payload boundary (e.g. unknown next protocol) — diagnose-mode
+  // consumers render payload, not malformedness. Never semantic.
+  map<string, string> annotations = 15;
 }
 
 message Select {

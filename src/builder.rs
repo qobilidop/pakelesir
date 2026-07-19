@@ -63,7 +63,52 @@ pub fn reject(reason: &str) -> pb::Target {
     pb::Target {
         kind: Some(pb::target::Kind::Reject(pb::Reject {
             reason: reason.into(),
+            ..Default::default()
         })),
+    }
+}
+
+/// Payload-boundary reject (severity=info): "parsing ends here, the
+/// rest is payload" — not malformedness.
+pub fn reject_info(reason: &str) -> pb::Target {
+    pb::Target {
+        kind: Some(pb::target::Kind::Reject(pb::Reject {
+            reason: reason.into(),
+            annotations: [("severity".to_string(), "info".to_string())].into(),
+        })),
+    }
+}
+
+// ---- Display helpers ----
+
+pub fn disp(name: &str, format: pb::DisplayFormat) -> pb::Display {
+    pb::Display {
+        name: name.into(),
+        format: format as i32,
+        ..Default::default()
+    }
+}
+
+pub trait DisplayExt {
+    fn labels(self, ls: &[(u64, &str)]) -> Self;
+    fn doc(self, text: &str) -> Self;
+}
+
+impl DisplayExt for pb::Display {
+    fn labels(mut self, ls: &[(u64, &str)]) -> Self {
+        self.value_labels = ls
+            .iter()
+            .map(|(v, l)| pb::ValueLabel {
+                value: *v,
+                label: l.to_string(),
+            })
+            .collect();
+        self
+    }
+
+    fn doc(mut self, text: &str) -> Self {
+        self.doc = text.into();
+        self
     }
 }
 
@@ -109,22 +154,40 @@ impl HeaderTypeBuilder {
     }
 
     pub fn bits(self, name: &str, n: u32) -> Self {
-        self.field(name, pb::field_width::Width::Bits(n), &[])
+        self.field(name, pb::field_width::Width::Bits(n), None, &[])
     }
 
     /// Fixed-width field carrying annotations, e.g. `("tshark.key", "eth.type")`.
     pub fn bits_ann(self, name: &str, n: u32, anns: &[(&str, &str)]) -> Self {
-        self.field(name, pb::field_width::Width::Bits(n), anns)
+        self.field(name, pb::field_width::Width::Bits(n), None, anns)
+    }
+
+    /// Fixed-width field with typed Display metadata and annotations.
+    pub fn bits_full(
+        self,
+        name: &str,
+        n: u32,
+        display: pb::Display,
+        anns: &[(&str, &str)],
+    ) -> Self {
+        self.field(name, pb::field_width::Width::Bits(n), Some(display), anns)
     }
 
     pub fn var_bytes(self, name: &str, byte_len: pb::Expr) -> Self {
-        self.field(name, pb::field_width::Width::ByteLen(byte_len), &[])
+        self.field(name, pb::field_width::Width::ByteLen(byte_len), None, &[])
     }
 
-    fn field(mut self, name: &str, width: pb::field_width::Width, anns: &[(&str, &str)]) -> Self {
+    fn field(
+        mut self,
+        name: &str,
+        width: pb::field_width::Width,
+        display: Option<pb::Display>,
+        anns: &[(&str, &str)],
+    ) -> Self {
         self.ht.fields.push(pb::Field {
             name: name.into(),
             width: Some(pb::FieldWidth { width: Some(width) }),
+            display,
             annotations: anns
                 .iter()
                 .map(|(k, val)| (k.to_string(), val.to_string()))

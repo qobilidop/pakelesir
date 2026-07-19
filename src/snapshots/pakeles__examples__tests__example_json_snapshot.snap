@@ -14,18 +14,54 @@ expression: json
             "name": "dst",
             "width": {
               "bits": 48
+            },
+            "display": {
+              "name": "Destination",
+              "format": "DISPLAY_FORMAT_ETHER"
+            },
+            "annotations": {
+              "tshark.key": "eth.dst"
             }
           },
           {
             "name": "src",
             "width": {
               "bits": 48
+            },
+            "display": {
+              "name": "Source",
+              "format": "DISPLAY_FORMAT_ETHER"
+            },
+            "annotations": {
+              "tshark.key": "eth.src"
             }
           },
           {
             "name": "ethertype",
             "width": {
               "bits": 16
+            },
+            "display": {
+              "name": "Type",
+              "format": "DISPLAY_FORMAT_HEX",
+              "valueLabels": [
+                {
+                  "value": "2048",
+                  "label": "IPv4"
+                },
+                {
+                  "value": "2054",
+                  "label": "ARP"
+                },
+                {
+                  "value": "33024",
+                  "label": "802.1Q VLAN"
+                },
+                {
+                  "value": "34525",
+                  "label": "IPv6"
+                }
+              ]
             },
             "annotations": {
               "tshark.key": "eth.type"
@@ -41,6 +77,10 @@ expression: json
             "width": {
               "bits": 4
             },
+            "display": {
+              "name": "Version",
+              "format": "DISPLAY_FORMAT_DEC"
+            },
             "annotations": {
               "tshark.key": "ip.version"
             }
@@ -49,24 +89,41 @@ expression: json
             "name": "ihl",
             "width": {
               "bits": 4
+            },
+            "display": {
+              "name": "Header Length",
+              "format": "DISPLAY_FORMAT_DEC",
+              "doc": "in 32-bit words"
             }
           },
           {
             "name": "dscp",
             "width": {
               "bits": 6
+            },
+            "display": {
+              "name": "DSCP",
+              "format": "DISPLAY_FORMAT_DEC"
             }
           },
           {
             "name": "ecn",
             "width": {
               "bits": 2
+            },
+            "display": {
+              "name": "ECN",
+              "format": "DISPLAY_FORMAT_DEC"
             }
           },
           {
             "name": "total_len",
             "width": {
               "bits": 16
+            },
+            "display": {
+              "name": "Total Length",
+              "format": "DISPLAY_FORMAT_DEC"
             },
             "annotations": {
               "tshark.key": "ip.len"
@@ -76,24 +133,40 @@ expression: json
             "name": "id",
             "width": {
               "bits": 16
+            },
+            "display": {
+              "name": "Identification",
+              "format": "DISPLAY_FORMAT_HEX"
             }
           },
           {
             "name": "flags",
             "width": {
               "bits": 3
+            },
+            "display": {
+              "name": "Flags",
+              "format": "DISPLAY_FORMAT_HEX"
             }
           },
           {
             "name": "frag_offset",
             "width": {
               "bits": 13
+            },
+            "display": {
+              "name": "Fragment Offset",
+              "format": "DISPLAY_FORMAT_DEC"
             }
           },
           {
             "name": "ttl",
             "width": {
               "bits": 8
+            },
+            "display": {
+              "name": "Time to Live",
+              "format": "DISPLAY_FORMAT_DEC"
             },
             "annotations": {
               "tshark.key": "ip.ttl"
@@ -104,6 +177,24 @@ expression: json
             "width": {
               "bits": 8
             },
+            "display": {
+              "name": "Protocol",
+              "format": "DISPLAY_FORMAT_DEC",
+              "valueLabels": [
+                {
+                  "value": "1",
+                  "label": "ICMP"
+                },
+                {
+                  "value": "6",
+                  "label": "TCP"
+                },
+                {
+                  "value": "17",
+                  "label": "UDP"
+                }
+              ]
+            },
             "annotations": {
               "tshark.key": "ip.proto"
             }
@@ -113,6 +204,10 @@ expression: json
             "width": {
               "bits": 16
             },
+            "display": {
+              "name": "Header Checksum",
+              "format": "DISPLAY_FORMAT_HEX"
+            },
             "annotations": {
               "tshark.key": "ip.checksum"
             }
@@ -121,12 +216,26 @@ expression: json
             "name": "src",
             "width": {
               "bits": 32
+            },
+            "display": {
+              "name": "Source Address",
+              "format": "DISPLAY_FORMAT_IPV4"
+            },
+            "annotations": {
+              "tshark.key": "ip.src"
             }
           },
           {
             "name": "dst",
             "width": {
               "bits": 32
+            },
+            "display": {
+              "name": "Destination Address",
+              "format": "DISPLAY_FORMAT_IPV4"
+            },
+            "annotations": {
+              "tshark.key": "ip.dst"
             }
           },
           {
@@ -166,6 +275,10 @@ expression: json
             "width": {
               "bits": 16
             },
+            "display": {
+              "name": "Source Port",
+              "format": "DISPLAY_FORMAT_DEC"
+            },
             "annotations": {
               "tshark.key": "tcp.srcport"
             }
@@ -175,6 +288,10 @@ expression: json
             "width": {
               "bits": 16
             },
+            "display": {
+              "name": "Destination Port",
+              "format": "DISPLAY_FORMAT_DEC"
+            },
             "annotations": {
               "tshark.key": "tcp.dstport"
             }
@@ -183,48 +300,81 @@ expression: json
             "name": "seq",
             "width": {
               "bits": 32
+            },
+            "display": {
+              "name": "Sequence Number",
+              "format": "DISPLAY_FORMAT_DEC"
             }
           },
           {
             "name": "ack",
             "width": {
               "bits": 32
+            },
+            "display": {
+              "name": "Acknowledgment Number",
+              "format": "DISPLAY_FORMAT_DEC"
             }
           },
           {
             "name": "data_offset",
             "width": {
               "bits": 4
+            },
+            "display": {
+              "name": "Data Offset",
+              "format": "DISPLAY_FORMAT_DEC",
+              "doc": "in 32-bit words"
             }
           },
           {
             "name": "reserved",
             "width": {
               "bits": 4
+            },
+            "display": {
+              "name": "Reserved",
+              "format": "DISPLAY_FORMAT_HEX"
             }
           },
           {
             "name": "flags",
             "width": {
               "bits": 8
+            },
+            "display": {
+              "name": "Flags",
+              "format": "DISPLAY_FORMAT_HEX"
             }
           },
           {
             "name": "window",
             "width": {
               "bits": 16
+            },
+            "display": {
+              "name": "Window",
+              "format": "DISPLAY_FORMAT_DEC"
             }
           },
           {
             "name": "checksum",
             "width": {
               "bits": 16
+            },
+            "display": {
+              "name": "Checksum",
+              "format": "DISPLAY_FORMAT_HEX"
             }
           },
           {
             "name": "urgent",
             "width": {
               "bits": 16
+            },
+            "display": {
+              "name": "Urgent Pointer",
+              "format": "DISPLAY_FORMAT_DEC"
             }
           }
         ]
@@ -262,7 +412,10 @@ expression: json
             ],
             "defaultTarget": {
               "reject": {
-                "reason": "unsupported ethertype"
+                "reason": "unsupported ethertype",
+                "annotations": {
+                  "severity": "info"
+                }
               }
             }
           }
@@ -299,7 +452,10 @@ expression: json
             ],
             "defaultTarget": {
               "reject": {
-                "reason": "unsupported ip protocol"
+                "reason": "unsupported ip protocol",
+                "annotations": {
+                  "severity": "info"
+                }
               }
             }
           }
