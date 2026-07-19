@@ -1,0 +1,3502 @@
+{
+  "parserName": "eth_ipv4_tcp",
+  "irVersion": "0.1.0",
+  "vectors": [
+    {
+      "id": "parse_ethernet/!trunc@ethernet.dst",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000",
+        "bitLen": "47"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/!trunc@ethernet.ethertype",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000000",
+        "bitLen": "111"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/!trunc@ethernet.src",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000",
+        "bitLen": "95"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800000000000000000000000000",
+        "bitLen": "207"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.dscp",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000000",
+        "bitLen": "125"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.dst",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000000000000000000000000000000000000000000",
+        "bitLen": "271"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.ecn",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000000",
+        "bitLen": "127"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080000000000000000",
+        "bitLen": "162"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.frag_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000000000000000000",
+        "bitLen": "175"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.id",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800000000000000",
+        "bitLen": "159"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.ihl",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080000",
+        "bitLen": "119"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.protocol",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080000000000000000000000",
+        "bitLen": "191"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.src",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080000000000000000000000000000000000",
+        "bitLen": "239"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.total_len",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080000000000",
+        "bitLen": "143"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.ttl",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800000000000000000000",
+        "bitLen": "183"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/!trunc@ipv4.version",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080000",
+        "bitLen": "115"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "000000000000000000000000080005000000000000000006000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "432"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "5"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": ""
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000500000000000000000600000000000000000000000000000000000000000000",
+        "bitLen": "367"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000500000000000000000600000000000000000000000000000000000000000000000000000000",
+        "bitLen": "415"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800050000000000000000060000000000000000000000000000000000000000000000",
+        "bitLen": "371"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800050000000000000000060000000000000000000000000000",
+        "bitLen": "303"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080005000000000000000006000000000000000000000000000000000000000000000000",
+        "bitLen": "383"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800050000000000000000060000000000000000000000000000000000000000000000",
+        "bitLen": "375"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080005000000000000000006000000000000000000000000000000000000",
+        "bitLen": "335"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080005000000000000000006000000000000000000000000",
+        "bitLen": "287"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080005000000000000000006000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "431"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800050000000000000000060000000000000000000000000000000000000000000000000000",
+        "bitLen": "399"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=0B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000500000000000000000000000000000000000000",
+        "bitLen": "272"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000800000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "367"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "000000000000000000000000080008000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "528"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "8"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "000000000000000000000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000800000000000000000600000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "463"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000800000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "511"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800080000000000000000060000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "467"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800080000000000000000060000000000000000000000000000000000000000000000000000",
+        "bitLen": "399"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080008000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "479"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800080000000000000000060000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "471"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080008000000000000000006000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "431"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080008000000000000000006000000000000000000000000000000000000000000000000",
+        "bitLen": "383"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080008000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "527"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800080000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "495"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=12B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000800000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "368"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800090000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "399"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000900000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "560"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "9"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "00000000000000000000000000000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800090000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "495"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800090000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "543"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080009000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "499"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080009000000000000000006000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "431"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000900000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "511"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080009000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "503"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000900000000000000000600000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "463"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000900000000000000000600000000000000000000000000000000000000000000000000000000",
+        "bitLen": "415"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000900000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "559"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080009000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "527"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=16B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "0000000000000000000000000800090000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "400"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=18446744073709551596B",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000000000000000000000000000000000000000000",
+        "bitLen": "272"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=18446744073709551600B",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000100000000000000000000000000000000000000",
+        "bitLen": "272"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=18446744073709551604B",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000200000000000000000000000000000000000000",
+        "bitLen": "272"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=18446744073709551608B",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000300000000000000000000000000000000000000",
+        "bitLen": "272"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=18446744073709551612B",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000400000000000000000000000000000000000000",
+        "bitLen": "272"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "431"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "592"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "10"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "0000000000000000000000000000000000000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "527"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "575"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "531"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a00000000000000000600000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "463"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "543"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "535"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "495"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a0000000000000000060000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "447"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "591"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "559"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=20B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000a000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "432"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "463"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "624"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "11"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "000000000000000000000000000000000000000000000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "559"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "607"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "563"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "495"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "575"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "567"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "527"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "479"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "623"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "591"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=24B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "464"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "495"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "656"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "12"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "00000000000000000000000000000000000000000000000000000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "591"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "639"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "595"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "527"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "607"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "599"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "559"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "511"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "655"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "623"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=28B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "496"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "527"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "688"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "13"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "0000000000000000000000000000000000000000000000000000000000000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "623"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "671"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "627"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "559"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "639"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "631"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "591"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "543"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "687"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "655"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=32B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "528"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "559"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "720"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "14"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "000000000000000000000000000000000000000000000000000000000000000000000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "655"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "703"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "659"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "591"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "671"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "663"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "623"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "575"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "719"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "687"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=36B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "560"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "591"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "752"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "15"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "00000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "687"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f0000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "735"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "691"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "623"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "703"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "695"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "655"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "607"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f00000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "751"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "719"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=40B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "592"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800060000000000000000000000000000000000000000000000",
+        "bitLen": "303"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "00000000000000000000000008000600000000000000000600000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "464"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "6"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "00000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800060000000000000000060000000000000000000000000000000000000000000000000000",
+        "bitLen": "399"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800060000000000000000060000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "447"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080006000000000000000006000000000000000000000000000000000000000000000000000000",
+        "bitLen": "403"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080006000000000000000006000000000000000000000000000000000000",
+        "bitLen": "335"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000600000000000000000600000000000000000000000000000000000000000000000000000000",
+        "bitLen": "415"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080006000000000000000006000000000000000000000000000000000000000000000000000000",
+        "bitLen": "407"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000600000000000000000600000000000000000000000000000000000000000000",
+        "bitLen": "367"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000600000000000000000600000000000000000000000000000000",
+        "bitLen": "319"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000600000000000000000600000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "463"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080006000000000000000006000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "431"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=4B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "0000000000000000000000000800060000000000000000000000000000000000000000000000",
+        "bitLen": "304"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/!trunc@ipv4.options",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080007000000000000000000000000000000000000000000000000000000",
+        "bitLen": "335"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp",
+      "category": "CATEGORY_ACCEPT",
+      "packet": {
+        "dataHex": "0000000000000000000000000800070000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "496"
+      },
+      "expected": {
+        "accept": {
+          "headers": [
+            {
+              "instance": "ethernet",
+              "fields": [
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "ethertype",
+                  "uint": "2048"
+                }
+              ]
+            },
+            {
+              "instance": "ipv4",
+              "fields": [
+                {
+                  "name": "version",
+                  "uint": "0"
+                },
+                {
+                  "name": "ihl",
+                  "uint": "7"
+                },
+                {
+                  "name": "dscp",
+                  "uint": "0"
+                },
+                {
+                  "name": "ecn",
+                  "uint": "0"
+                },
+                {
+                  "name": "total_len",
+                  "uint": "0"
+                },
+                {
+                  "name": "id",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "frag_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "ttl",
+                  "uint": "0"
+                },
+                {
+                  "name": "protocol",
+                  "uint": "6"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "src",
+                  "uint": "0"
+                },
+                {
+                  "name": "dst",
+                  "uint": "0"
+                },
+                {
+                  "name": "options",
+                  "bytesHex": "0000000000000000"
+                }
+              ]
+            },
+            {
+              "instance": "tcp",
+              "fields": [
+                {
+                  "name": "sport",
+                  "uint": "0"
+                },
+                {
+                  "name": "dport",
+                  "uint": "0"
+                },
+                {
+                  "name": "seq",
+                  "uint": "0"
+                },
+                {
+                  "name": "ack",
+                  "uint": "0"
+                },
+                {
+                  "name": "data_offset",
+                  "uint": "0"
+                },
+                {
+                  "name": "reserved",
+                  "uint": "0"
+                },
+                {
+                  "name": "flags",
+                  "uint": "0"
+                },
+                {
+                  "name": "window",
+                  "uint": "0"
+                },
+                {
+                  "name": "checksum",
+                  "uint": "0"
+                },
+                {
+                  "name": "urgent",
+                  "uint": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.ack",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080007000000000000000006000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "431"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.checksum",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "000000000000000000000000080007000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "479"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.data_offset",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000700000000000000000600000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "435"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.dport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000700000000000000000600000000000000000000000000000000000000000000",
+        "bitLen": "367"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.flags",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800070000000000000000060000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "447"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.reserved",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000700000000000000000600000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "439"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.seq",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800070000000000000000060000000000000000000000000000000000000000000000000000",
+        "bitLen": "399"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.sport",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800070000000000000000060000000000000000000000000000000000000000",
+        "bitLen": "351"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.urgent",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "0000000000000000000000000800070000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "495"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/arm0/parse_tcp/!trunc@tcp.window",
+      "category": "CATEGORY_TRUNCATION",
+      "packet": {
+        "dataHex": "00000000000000000000000008000700000000000000000600000000000000000000000000000000000000000000000000000000000000000000",
+        "bitLen": "463"
+      },
+      "expected": {
+        "reject": {
+          "reason": "out of bounds"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/arm0/parse_ipv4/ipv4.options=8B/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "000000000000000000000000080007000000000000000000000000000000000000000000000000000000",
+        "bitLen": "336"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ip protocol"
+        }
+      }
+    },
+    {
+      "id": "parse_ethernet/default",
+      "category": "CATEGORY_REJECT",
+      "packet": {
+        "dataHex": "000000000000000000000000f7ff",
+        "bitLen": "112"
+      },
+      "expected": {
+        "reject": {
+          "reason": "unsupported ethertype"
+        }
+      }
+    }
+  ]
+}

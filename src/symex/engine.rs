@@ -66,7 +66,7 @@ struct Frame {
     depth: u32,
 }
 
-pub fn enumerate(ir: &pb::Ir, solver: &mut dyn Solver) -> anyhow::Result<Enumeration> {
+pub(crate) fn enumerate(ir: &pb::Ir, solver: &mut dyn Solver) -> anyhow::Result<Enumeration> {
     let parser = ir
         .parser
         .as_ref()

@@ -38,6 +38,15 @@ enum Command {
         #[command(subcommand)]
         oracle: Oracle,
     },
+    /// Generate the path-complete conformance test-vector suite.
+    #[cfg(feature = "symex")]
+    Testgen {
+        #[arg(long)]
+        ir: Option<PathBuf>,
+        /// Output path; `-` for stdout.
+        #[arg(long, default_value = "-")]
+        out: PathBuf,
+    },
     /// Write the built-in example IR (the file other tools consume).
     ExportIr {
         /// Output path; `-` for stdout (JSON only).
@@ -135,6 +144,18 @@ pub fn main_with(args: &[&str]) -> Result<i32> {
                 );
             }
             Ok(if report.mismatches.is_empty() { 0 } else { 1 })
+        }
+        #[cfg(feature = "symex")]
+        Command::Testgen { ir, out } => {
+            let suite = crate::symex::testgen::generate(&load_ir(&ir)?)?;
+            let json = crate::testvec::suite_to_json(&suite)?;
+            if out.as_os_str() == "-" {
+                println!("{json}");
+            } else {
+                std::fs::write(&out, json)?;
+                eprintln!("wrote {} vectors to {}", suite.vectors.len(), out.display());
+            }
+            Ok(0)
         }
         Command::ExportIr { out, binary } => {
             let ir = crate::examples::eth_ipv4_tcp();

@@ -42,9 +42,16 @@ pub struct ParseResult {
     pub headers: Vec<ParsedHeader>,
 }
 
-/// Run the parser over one packet. `Err` means the IR itself is
-/// malformed; anything about the *packet* is a `Reject` outcome.
+/// Run the parser over one byte-aligned packet. `Err` means the IR
+/// itself is malformed; anything about the *packet* is a `Reject`.
 pub fn run(ir: &pb::Ir, packet: &[u8]) -> anyhow::Result<ParseResult> {
+    run_bits(ir, &crate::testvec::Bits::from_bytes(packet))
+}
+
+/// Bit-granular entry point (test vectors may end mid-byte).
+pub fn run_bits(ir: &pb::Ir, input: &crate::testvec::Bits) -> anyhow::Result<ParseResult> {
+    let packet = input.bytes.as_slice();
+    let avail_bits = input.bit_len;
     let parser = ir
         .parser
         .as_ref()
@@ -105,7 +112,7 @@ pub fn run(ir: &pb::Ir, packet: &[u8]) -> anyhow::Result<ParseResult> {
                 match width {
                     pb::field_width::Width::Bits(n) => {
                         let n = *n as usize;
-                        let Some(value) = read_bits(packet, cursor_bits, n) else {
+                        let Some(value) = read_bits(packet, avail_bits, cursor_bits, n) else {
                             headers.push(parsed);
                             return reject("out of bounds", headers);
                         };
@@ -127,10 +134,16 @@ pub fn run(ir: &pb::Ir, packet: &[u8]) -> anyhow::Result<ParseResult> {
                             );
                         }
                         let start = cursor_bits / 8;
-                        let Some(slice) = packet.get(start..start + len_bytes) else {
+                        // len_bytes may be a wrapped u64 (e.g. ihl<5);
+                        // checked math makes that an oob, not a panic.
+                        let end_bits = len_bytes
+                            .checked_mul(8)
+                            .and_then(|lb| lb.checked_add(cursor_bits));
+                        if end_bits.is_none_or(|e| e > avail_bits) {
                             headers.push(parsed);
                             return reject("out of bounds", headers);
-                        };
+                        }
+                        let slice = &packet[start..start + len_bytes];
                         parsed.fields.push(ParsedField {
                             name: field.name.clone(),
                             bit_offset: cursor_bits,
