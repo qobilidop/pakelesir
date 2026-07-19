@@ -681,7 +681,7 @@ mod tests {
         );
 
         let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors.json").unwrap(),
+            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors/vectors.json").unwrap(),
         )
         .unwrap();
         let mut input = String::new();
@@ -822,7 +822,7 @@ mod tests {
         assert!(!prog.is_empty());
 
         let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors.json").unwrap(),
+            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors/vectors.json").unwrap(),
         )
         .unwrap();
         let reasons = reason_table(ir.parser.as_ref().unwrap());
@@ -871,9 +871,9 @@ mod tests {
         let arts = generate_c(&eth_ipv4_tcp()).unwrap();
         let ebpf = generate_ebpf(&eth_ipv4_tcp()).unwrap();
         for (path, fresh) in [
-            ("examples/eth_ipv4_tcp/parser.h", &arts.header),
-            ("examples/eth_ipv4_tcp/parser.c", &arts.source),
-            ("examples/eth_ipv4_tcp/ebpf.c", &ebpf),
+            ("examples/eth_ipv4_tcp/gen/parser.h", &arts.header),
+            ("examples/eth_ipv4_tcp/gen/parser.c", &arts.source),
+            ("examples/eth_ipv4_tcp/gen/ebpf.c", &ebpf),
         ] {
             let committed = std::fs::read_to_string(path).unwrap();
             assert_eq!(

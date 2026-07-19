@@ -591,7 +591,7 @@ mod tests {
     #[test]
     fn committed_p4_artifact_current() {
         let p4 = generate_p4(&crate::examples::eth_ipv4_tcp()).unwrap();
-        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/parser.p4").unwrap();
+        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/gen/parser.p4").unwrap();
         assert_eq!(
             p4, committed,
             "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"

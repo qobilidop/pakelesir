@@ -668,7 +668,7 @@ mod tests {
         assert!(lua.contains("function states.parse_ipv4"));
         assert!(lua.contains("ProtoField.ether"));
         assert!(lua.contains("[6] = \"TCP\""));
-        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/dissector.lua").unwrap();
+        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/gen/dissector.lua").unwrap();
         assert_eq!(
             lua, committed,
             "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"
@@ -691,7 +691,7 @@ mod tests {
         let parser = ir.parser.as_ref().unwrap();
         let proto = format!("pakeles_{}", parser.name);
         let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors.json").unwrap(),
+            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors/vectors.json").unwrap(),
         )
         .unwrap();
         let (packets, indices) = crate::testvec::suite_to_packets(&suite);

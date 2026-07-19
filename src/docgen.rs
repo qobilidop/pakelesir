@@ -138,7 +138,7 @@ mod tests {
         let md = super::generate_markdown(&crate::examples::eth_ipv4_tcp()).unwrap();
         assert!(md.contains("| `ttl` | 8 | dec | Time to Live |"));
         assert!(md.contains("payload boundary"));
-        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/doc.md").unwrap();
+        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/gen/doc.md").unwrap();
         assert_eq!(
             md, committed,
             "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"

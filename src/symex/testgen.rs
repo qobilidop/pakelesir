@@ -174,7 +174,7 @@ mod tests {
 
     #[test]
     fn committed_vectors_replay_green() {
-        let path = "examples/eth_ipv4_tcp/vectors.json";
+        let path = "examples/eth_ipv4_tcp/vectors/vectors.json";
         let text = std::fs::read_to_string(path).expect("committed suite exists");
         let suite = crate::testvec::suite_from_json(&text).unwrap();
         let mismatches = replay(&eth_ipv4_tcp(), &suite).unwrap();

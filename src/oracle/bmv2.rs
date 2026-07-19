@@ -241,7 +241,7 @@ mod tests {
         let dir = std::env::temp_dir().join("pakeles_bmv2_unit");
         let json = compile(&p4, &dir).unwrap();
         let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors.json").unwrap(),
+            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors/vectors.json").unwrap(),
         )
         .unwrap();
         let (packets, indices) = crate::testvec::suite_to_packets(&suite);
@@ -265,7 +265,7 @@ mod tests {
         }
         let ir = crate::examples::eth_ipv4_tcp();
         let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors.json").unwrap(),
+            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors/vectors.json").unwrap(),
         )
         .unwrap();
         let report = diff_suite(&ir, &suite).unwrap();
