@@ -7,6 +7,8 @@ pub mod pb {
     include!(concat!(env!("OUT_DIR"), "/pakeles.ir.v1alpha1.serde.rs"));
 }
 
+pub mod validate;
+
 pub const IR_VERSION: &str = "0.1.0";
 
 use anyhow::Result;
