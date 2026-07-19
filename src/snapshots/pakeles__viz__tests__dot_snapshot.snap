@@ -1,0 +1,19 @@
+---
+source: src/viz.rs
+expression: dot
+---
+digraph "eth_ipv4_tcp" {
+  rankdir=TB;
+  node [fontname="Helvetica"];
+  "parse_ethernet" [shape=box, label="parse_ethernet\nextract ethernet"];
+  "parse_ipv4" [shape=box, label="parse_ipv4\nextract ipv4"];
+  "parse_tcp" [shape=box, label="parse_tcp\nextract tcp"];
+  "accept" [shape=doublecircle];
+  "reject_0" [shape=diamond, label="reject:\nunsupported ethertype"];
+  "reject_1" [shape=diamond, label="reject:\nunsupported ip protocol"];
+  "parse_ethernet" -> "parse_ipv4" [label="ethernet.ethertype == 0x800"];
+  "parse_ethernet" -> "reject_0" [label="default", style=dashed];
+  "parse_ipv4" -> "parse_tcp" [label="ipv4.protocol == 0x6"];
+  "parse_ipv4" -> "reject_1" [label="default", style=dashed];
+  "parse_tcp" -> "accept";
+}
