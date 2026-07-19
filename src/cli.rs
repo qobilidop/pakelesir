@@ -10,7 +10,7 @@ use std::path::PathBuf;
 #[command(
     name = "pakeles",
     version,
-    about = "PakelesIR wire-format parser toolchain"
+    about = "Pakeles wire-format parser toolchain"
 )]
 struct Cli {
     #[command(subcommand)]

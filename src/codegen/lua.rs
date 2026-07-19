@@ -50,7 +50,7 @@ pub fn generate_lua(ir: &pb::Ir) -> Result<String> {
     writeln!(w, "-- matching the reference interpreter's outcome.")?;
     writeln!(
         w,
-        "local p = Proto(\"{proto}\", \"PakelesIR {}\")",
+        "local p = Proto(\"{proto}\", \"Pakeles {}\")",
         parser.name
     )?;
     writeln!(w)?;
@@ -663,12 +663,16 @@ mod tests {
     use crate::examples::eth_ipv4_tcp;
 
     #[test]
-    fn lua_snapshot() {
+    fn committed_dissector_current() {
         let lua = generate_lua(&eth_ipv4_tcp()).unwrap();
         assert!(lua.contains("function states.parse_ipv4"));
         assert!(lua.contains("ProtoField.ether"));
         assert!(lua.contains("[6] = \"TCP\""));
-        insta::assert_snapshot!(lua);
+        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/dissector.lua").unwrap();
+        assert_eq!(
+            lua, committed,
+            "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"
+        );
     }
 
     /// The full loop: symbolic vectors -> pcap -> tshark running our
@@ -687,7 +691,7 @@ mod tests {
         let parser = ir.parser.as_ref().unwrap();
         let proto = format!("pakeles_{}", parser.name);
         let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string("testdata/eth_ipv4_tcp.vectors.json").unwrap(),
+            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors.json").unwrap(),
         )
         .unwrap();
         let (packets, indices) = crate::testvec::suite_to_packets(&suite);

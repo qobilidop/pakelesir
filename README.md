@@ -1,4 +1,4 @@
-# PakelesIR
+# Pakeles
 
 > [!WARNING]
 > **Work in progress, iterating fast — don't use this yet.** The IR
@@ -6,8 +6,9 @@
 > and compatibility is deliberately not promised at this stage. Watch
 > the repo if you're curious; don't build on it.
 
-A serializable IR for wire-format parsers, plus the toolchain that makes
-one description yield many artifacts that provably agree: reference
+A toolchain built around a serializable IR (the Pakeles IR) for
+wire-format parsers — one description yields many artifacts that
+provably agree: reference
 interpretation, generated dissectors and datapath parsers, validators,
 and golden test vectors. Parsing is the decidable subset of packet
 processing — parsers here are bounded by construction, which is what
@@ -54,5 +55,7 @@ dissection — side-by-side comparison for free).
   solver trait), `codegen` (backends: Wireshark Lua), `docgen`, `viz`,
   `oracle` (tshark diff), `cli`
 - `testdata/` — language-neutral fixtures (regenerate: `cargo run --bin gen_fixtures`)
+- `examples/eth_ipv4_tcp/` — the gallery: every artifact one
+  description yields, equality-guarded by tests
 - `docs/superpowers/specs/` — design docs; start with
   `2026-07-18-pakelesir-v0-design.md`

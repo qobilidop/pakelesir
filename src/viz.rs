@@ -158,9 +158,13 @@ mod tests {
     use crate::examples::eth_ipv4_tcp;
 
     #[test]
-    fn dot_snapshot() {
+    fn committed_dot_current() {
         let dot = to_dot(&eth_ipv4_tcp());
         assert!(dot.contains("\"parse_ipv4\" -> \"parse_tcp\""));
-        insta::assert_snapshot!(dot);
+        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/graph.dot").unwrap();
+        assert_eq!(
+            dot, committed,
+            "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"
+        );
     }
 }

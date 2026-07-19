@@ -20,8 +20,11 @@ z3 = { version = "0.12", optional = true }
 default = ["symex"]
 symex = ["dep:z3"]
 
+[[bin]]
+name = "gen_examples"
+required-features = ["symex"]
+
 [dev-dependencies]
-insta = { version = "1", features = ["json"] }
 
 [build-dependencies]
 prost-build = "0.13"

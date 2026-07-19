@@ -174,7 +174,7 @@ mod tests {
 
     #[test]
     fn suite_to_packets_selects_byte_aligned() {
-        let text = std::fs::read_to_string("testdata/eth_ipv4_tcp.vectors.json").unwrap();
+        let text = std::fs::read_to_string("examples/eth_ipv4_tcp/vectors.json").unwrap();
         let suite = suite_from_json(&text).unwrap();
         let (packets, indices) = suite_to_packets(&suite);
         assert_eq!(packets.len(), indices.len());
@@ -191,6 +191,21 @@ mod tests {
             .filter(|(_, v)| v.category == pb::Category::Accept as i32)
             .count();
         assert!(indices.len() >= accepts);
+    }
+
+    #[test]
+    fn committed_vectors_pcap_current() {
+        let text = std::fs::read_to_string("examples/eth_ipv4_tcp/vectors.json").unwrap();
+        let suite = suite_from_json(&text).unwrap();
+        let (packets, _) = suite_to_packets(&suite);
+        let tmp = std::env::temp_dir().join("pakeles_gallery_check.pcap");
+        crate::pcapio::write_pcap(&tmp, &packets).unwrap();
+        let fresh = std::fs::read(&tmp).unwrap();
+        let committed = std::fs::read("examples/eth_ipv4_tcp/vectors.pcap").unwrap();
+        assert_eq!(
+            fresh, committed,
+            "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"
+        );
     }
 
     #[test]

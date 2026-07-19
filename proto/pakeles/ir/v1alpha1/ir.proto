@@ -1,4 +1,4 @@
-// PakelesIR: a serializable IR for wire-format parsers.
+// Pakeles IR: a serializable IR for wire-format parsers.
 // This schema is the one normative artifact; every tool consumes or
 // produces messages defined here. Expressions are operator trees —
 // no syntax is ever smuggled inside strings.

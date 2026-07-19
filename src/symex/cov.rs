@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn pathid_roundtrips_all_committed_vectors() {
         let ir = eth_ipv4_tcp();
-        let text = std::fs::read_to_string("testdata/eth_ipv4_tcp.vectors.json").unwrap();
+        let text = std::fs::read_to_string("examples/eth_ipv4_tcp/vectors.json").unwrap();
         let suite = crate::testvec::suite_from_json(&text).unwrap();
         for v in &suite.vectors {
             let (bits, _) = crate::testvec::Bits::from_pb(v.packet.as_ref().unwrap());

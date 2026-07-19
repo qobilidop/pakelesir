@@ -134,10 +134,14 @@ fn target_text(t: &pb::Target) -> String {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn markdown_snapshot() {
+    fn committed_doc_current() {
         let md = super::generate_markdown(&crate::examples::eth_ipv4_tcp()).unwrap();
         assert!(md.contains("| `ttl` | 8 | dec | Time to Live |"));
         assert!(md.contains("payload boundary"));
-        insta::assert_snapshot!(md);
+        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/doc.md").unwrap();
+        assert_eq!(
+            md, committed,
+            "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"
+        );
     }
 }

@@ -1,7 +1,3 @@
----
-source: src/examples.rs
-expression: json
----
 {
   "irVersion": "0.1.0",
   "parser": {

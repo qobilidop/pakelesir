@@ -1,7 +1,3 @@
----
-source: src/viz.rs
-expression: dot
----
 digraph "eth_ipv4_tcp" {
   rankdir=TB;
   node [fontname="Helvetica"];
