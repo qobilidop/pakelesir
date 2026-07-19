@@ -148,7 +148,7 @@ enum Oracle {
         #[arg(long)]
         ir: Option<PathBuf>,
         /// Vector suite (testvec JSON). Defaults to the gallery suite.
-        #[arg(long, default_value = "examples/eth_ipv4_tcp/vectors/vectors.json")]
+        #[arg(long, default_value = "examples/eth_ipv4_tcp/conformance/vectors.json")]
         vectors: PathBuf,
     },
 }

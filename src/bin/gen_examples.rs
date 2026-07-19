@@ -5,15 +5,15 @@ use std::path::Path;
 
 fn main() -> anyhow::Result<()> {
     // Role-organized gallery: top level = input + normative IR + README;
-    // gen/ = everything compiled from the IR; vectors/ = the suite.
+    // gen/ = everything compiled from the IR; conformance/ = the suite.
     let dir = Path::new("examples/eth_ipv4_tcp");
     let gen = dir.join("gen");
-    let vectors = dir.join("vectors");
+    let conformance = dir.join("conformance");
     std::fs::create_dir_all(&gen)?;
-    std::fs::create_dir_all(&vectors)?;
+    std::fs::create_dir_all(&conformance)?;
     let ir = pakeles::examples::eth_ipv4_tcp();
 
-    std::fs::write(dir.join("ir.json"), pakeles::ir::to_json(&ir)?)?;
+    std::fs::write(dir.join("eth_ipv4_tcp.ir.json"), pakeles::ir::to_json(&ir)?)?;
     // The Python eDSL authoring source (the gallery's *input* twin):
     // canonical copy lives in the py package; mirrored here for browsing.
     std::fs::copy(
@@ -39,11 +39,11 @@ fn main() -> anyhow::Result<()> {
 
     let suite = pakeles::symex::testgen::generate(&ir)?;
     std::fs::write(
-        vectors.join("vectors.json"),
+        conformance.join("vectors.json"),
         pakeles::testvec::suite_to_json(&suite)?,
     )?;
     let (packets, _) = pakeles::testvec::suite_to_packets(&suite);
-    pakeles::pcapio::write_pcap(&vectors.join("vectors.pcap"), &packets)?;
+    pakeles::pcapio::write_pcap(&conformance.join("vectors.pcap"), &packets)?;
 
     // Best-effort SVG render (needs graphviz; fine to skip elsewhere).
     let dot = std::process::Command::new("dot")

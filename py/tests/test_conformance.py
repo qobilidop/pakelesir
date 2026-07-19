@@ -9,7 +9,7 @@ from google.protobuf import json_format
 from pakeles._pb import ir_pb2
 from pakeles.examples.eth_ipv4_tcp import eth_ipv4_tcp
 
-GALLERY = Path(__file__).resolve().parents[2] / "examples/eth_ipv4_tcp/ir.json"
+GALLERY = Path(__file__).resolve().parents[2] / "examples/eth_ipv4_tcp/eth_ipv4_tcp.ir.json"
 
 
 def test_python_authoring_matches_gallery() -> None:

@@ -681,7 +681,7 @@ mod tests {
         );
 
         let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors/vectors.json").unwrap(),
+            &std::fs::read_to_string("examples/eth_ipv4_tcp/conformance/vectors.json").unwrap(),
         )
         .unwrap();
         let mut input = String::new();
@@ -822,7 +822,7 @@ mod tests {
         assert!(!prog.is_empty());
 
         let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string("examples/eth_ipv4_tcp/vectors/vectors.json").unwrap(),
+            &std::fs::read_to_string("examples/eth_ipv4_tcp/conformance/vectors.json").unwrap(),
         )
         .unwrap();
         let reasons = reason_table(ir.parser.as_ref().unwrap());

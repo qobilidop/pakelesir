@@ -6,13 +6,13 @@ and everything **derived** from it.
 
 ```mermaid
 flowchart LR
-    PY["eth_ipv4_tcp.py\n(authoring, Python eDSL)"] -->|"emit + fmt-ir"| IR["ir.json\n(normative Pakeles IR)"]
+    PY["eth_ipv4_tcp.py\n(authoring, Python eDSL)"] -->|"emit + fmt-ir"| IR["eth_ipv4_tcp.ir.json\n(normative Pakeles IR)"]
     IR -->|"gen lua"| LUA["gen/dissector.lua"]
     IR -->|"gen c"| C["gen/parser.h/.c"]
     IR -->|"gen ebpf"| EBPF["gen/ebpf.c"]
     IR -->|"gen p4"| P4["gen/parser.p4"]
     IR -->|"doc / viz"| DOCS["gen/doc.md, gen/graph.svg"]
-    IR -->|"testgen (symbolic execution)"| V["vectors/\n164 path-complete vectors"]
+    IR -->|"testgen (symbolic execution)"| V["conformance/\n164 path-complete vectors"]
     V -.->|conformance| LUA & C & EBPF & P4
 ```
 
@@ -24,13 +24,13 @@ drifts from what the toolchain generates, CI fails. Regenerate with
 
 | File | What it is | Verified by |
 |---|---|---|
-| [`eth_ipv4_tcp.py`](eth_ipv4_tcp.py) | The description, authored in the Python eDSL (mirrored from [`py/`](../../py)) | proto-equal to `ir.json`, which the independent Rust builder ([`src/examples.rs`](../../src/examples.rs)) also produces |
+| [`eth_ipv4_tcp.py`](eth_ipv4_tcp.py) | The description, authored in the Python eDSL (mirrored from [`py/`](../../py)) | proto-equal to `eth_ipv4_tcp.ir.json`, which the independent Rust builder ([`src/examples.rs`](../../src/examples.rs)) also produces |
 
 ## The contract
 
 | File | What it is | Verified by |
 |---|---|---|
-| [`ir.json`](ir.json) | The normative Pakeles IR (protojson) — the only artifact other tools consume | schema validation + reference interpretation; differentially tested against `tshark` on real captures |
+| [`eth_ipv4_tcp.ir.json`](eth_ipv4_tcp.ir.json) | The normative Pakeles IR (protojson) — the only artifact other tools consume | schema validation + reference interpretation; differentially tested against `tshark` on real captures |
 
 ## Derived: implementations that provably agree
 
@@ -52,15 +52,15 @@ drifts from what the toolchain generates, CI fails. Regenerate with
 
 | File | What it is | Verified by |
 |---|---|---|
-| [`vectors/vectors.json`](vectors/vectors.json) | Path-complete suite: 164 solver-derived vectors (11 accept / 17 reject / 136 truncation — every parse path gets a witness packet) | replayed by the reference interpreter in CI; cross-validated by path ids |
-| [`vectors/vectors.pcap`](vectors/vectors.pcap) | The 28 byte-aligned vectors as a capture file | same vectors, wire form |
+| [`conformance/vectors.json`](conformance/vectors.json) | Path-complete suite: 164 solver-derived vectors (11 accept / 17 reject / 136 truncation — every parse path gets a witness packet) | replayed by the reference interpreter in CI; cross-validated by path ids |
+| [`conformance/vectors.pcap`](conformance/vectors.pcap) | The 28 byte-aligned vectors as a capture file | same vectors, wire form |
 
 ## Try it
 
 Any machine with Wireshark ≥ 4.x — no build required:
 
 ```sh
-tshark -X lua_script:gen/dissector.lua -r vectors/vectors.pcap -V
+tshark -X lua_script:gen/dissector.lua -r conformance/vectors.pcap -V
 ```
 
 The dissector registers as a postdissector, so its tree appears

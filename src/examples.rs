@@ -166,7 +166,8 @@ mod tests {
     #[test]
     fn committed_ir_json_current() {
         let json = crate::ir::to_json(&eth_ipv4_tcp()).unwrap();
-        let committed = std::fs::read_to_string("examples/eth_ipv4_tcp/ir.json").unwrap();
+        let committed =
+            std::fs::read_to_string("examples/eth_ipv4_tcp/eth_ipv4_tcp.ir.json").unwrap();
         assert_eq!(
             json, committed,
             "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"
