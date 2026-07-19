@@ -54,6 +54,14 @@ RUN git clone --depth 1 --branch "v${P4C_VERSION}" --recursive \
  && cmake --install /tmp/p4c/build \
  && rm -rf /tmp/p4c
 
+# Python authoring-surface tooling (slice 6). Pinned loosely; the gate
+# (ruff/pyright/pytest) is what actually defines correctness.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3-pip python3-venv \
+ && rm -rf /var/lib/apt/lists/* \
+ && python3 -m pip install --break-system-packages --no-cache-dir \
+      "protobuf>=5" "pytest>=8" "ruff>=0.5" "pyright>=1.1.380"
+
 # Rust via rustup, default profile (includes rustfmt + clippy).
 # System-wide homes so dev.sh cache volumes can mount over them.
 ENV RUSTUP_HOME=/usr/local/rustup \

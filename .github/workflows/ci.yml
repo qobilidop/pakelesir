@@ -42,4 +42,4 @@ jobs:
             -v "$PWD/.ci/target":/target \
             -v "$PWD/.ci/cargo-registry":/usr/local/cargo/registry \
             pakeles-dev \
-            sh -c 'cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test && buf lint'
+            sh -c 'cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test && buf lint && cd py && ruff check . && pyright && pytest'

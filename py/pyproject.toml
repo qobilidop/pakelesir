@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pakeles"
+version = "0.1.0"
+description = "Python authoring eDSL for the Pakeles IR"
+requires-python = ">=3.10"
+dependencies = ["protobuf>=5"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+extend-exclude = ["src/pakeles/_pb"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.pyright]
+include = ["src", "tests"]
+typeCheckingMode = "strict"
+# Generated protobuf stubs are not strict-clean; they are the vendored
+# bottom layer, excluded by design.
+exclude = ["src/pakeles/_pb/**"]
+reportMissingModuleSource = false
