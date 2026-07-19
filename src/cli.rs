@@ -64,6 +64,14 @@ enum Command {
         #[arg(long)]
         ir: Option<PathBuf>,
     },
+    /// Generate markdown documentation from the IR + annotations.
+    Doc {
+        #[arg(long)]
+        ir: Option<PathBuf>,
+        /// Output path; `-` for stdout.
+        #[arg(long, default_value = "-")]
+        out: PathBuf,
+    },
     /// Generate a backend artifact from the IR.
     Gen {
         #[command(subcommand)]
@@ -243,6 +251,15 @@ pub fn main_with(args: &[&str]) -> Result<i32> {
                     pcap.display(),
                     suite.vectors.len() - indices.len()
                 );
+            }
+            Ok(0)
+        }
+        Command::Doc { ir, out } => {
+            let md = crate::docgen::generate_markdown(&load_ir(&ir)?)?;
+            if out.as_os_str() == "-" {
+                print!("{md}");
+            } else {
+                std::fs::write(&out, md)?;
             }
             Ok(0)
         }

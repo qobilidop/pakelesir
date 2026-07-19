@@ -3,6 +3,16 @@
 use crate::ir::pb;
 use std::fmt::Write;
 
+/// Human-readable expression text, shared with docgen.
+pub(crate) fn expr_text(e: &pb::Expr) -> String {
+    fmt_expr(e)
+}
+
+/// Human-readable keyset-entry text, shared with docgen.
+pub(crate) fn entry_text(key: &pb::Expr, entry: &pb::KeysetEntry) -> String {
+    fmt_entry(key, entry)
+}
+
 fn fmt_expr(e: &pb::Expr) -> String {
     match e.kind.as_ref() {
         Some(pb::expr::Kind::Constant(v)) => format!("{v}"),

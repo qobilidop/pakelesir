@@ -818,13 +818,12 @@ mod tests {
         );
     }
 
+    type ExpectedFields = Vec<(String, Option<crate::testvec::pb::expected_field::Value>)>;
+
     /// interp headers -> the (inst, fields) shape used above.
     fn headers_to_expected(
         headers: &[crate::interp::ParsedHeader],
-    ) -> Vec<(
-        String,
-        Vec<(String, Option<crate::testvec::pb::expected_field::Value>)>,
-    )> {
+    ) -> Vec<(String, ExpectedFields)> {
         headers
             .iter()
             .map(|h| {
