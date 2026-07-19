@@ -64,6 +64,11 @@ enum Command {
         #[arg(long)]
         ir: Option<PathBuf>,
     },
+    /// Generate a backend artifact from the IR.
+    Gen {
+        #[command(subcommand)]
+        target: GenTarget,
+    },
     /// Write the built-in example IR (the file other tools consume).
     ExportIr {
         /// Output path; `-` for stdout (JSON only).
@@ -71,6 +76,18 @@ enum Command {
         out: PathBuf,
         #[arg(long)]
         binary: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum GenTarget {
+    /// Wireshark Lua dissector (direct translation, Lua 5.2).
+    Lua {
+        #[arg(long)]
+        ir: Option<PathBuf>,
+        /// Output path; `-` for stdout.
+        #[arg(long, default_value = "-")]
+        out: PathBuf,
     },
 }
 
@@ -226,6 +243,17 @@ pub fn main_with(args: &[&str]) -> Result<i32> {
                     pcap.display(),
                     suite.vectors.len() - indices.len()
                 );
+            }
+            Ok(0)
+        }
+        Command::Gen {
+            target: GenTarget::Lua { ir, out },
+        } => {
+            let lua = crate::codegen::lua::generate_lua(&load_ir(&ir)?)?;
+            if out.as_os_str() == "-" {
+                print!("{lua}");
+            } else {
+                std::fs::write(&out, lua)?;
             }
             Ok(0)
         }

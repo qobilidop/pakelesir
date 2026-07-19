@@ -527,9 +527,18 @@ mod tests {
                 display: Some(pb::Display {
                     name: "F".into(),
                     value_labels: vec![
-                        pb::ValueLabel { value: 3, label: "a".into() },
-                        pb::ValueLabel { value: 3, label: "b".into() },
-                        pb::ValueLabel { value: 99, label: "c".into() },
+                        pb::ValueLabel {
+                            value: 3,
+                            label: "a".into(),
+                        },
+                        pb::ValueLabel {
+                            value: 3,
+                            label: "b".into(),
+                        },
+                        pb::ValueLabel {
+                            value: 99,
+                            label: "c".into(),
+                        },
                     ],
                     ..Default::default()
                 }),

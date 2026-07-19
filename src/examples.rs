@@ -15,8 +15,18 @@ pub fn eth_ipv4_tcp() -> pb::Ir {
     ParserBuilder::new("eth_ipv4_tcp", 4)
         .header(
             HeaderTypeBuilder::new("ethernet")
-                .bits_full("dst", 48, disp("Destination", F::Ether), &[("tshark.key", "eth.dst")])
-                .bits_full("src", 48, disp("Source", F::Ether), &[("tshark.key", "eth.src")])
+                .bits_full(
+                    "dst",
+                    48,
+                    disp("Destination", F::Ether),
+                    &[("tshark.key", "eth.dst")],
+                )
+                .bits_full(
+                    "src",
+                    48,
+                    disp("Source", F::Ether),
+                    &[("tshark.key", "eth.src")],
+                )
                 .bits_full(
                     "ethertype",
                     16,
@@ -31,7 +41,12 @@ pub fn eth_ipv4_tcp() -> pb::Ir {
         )
         .header(
             HeaderTypeBuilder::new("ipv4")
-                .bits_full("version", 4, disp("Version", F::Dec), &[("tshark.key", "ip.version")])
+                .bits_full(
+                    "version",
+                    4,
+                    disp("Version", F::Dec),
+                    &[("tshark.key", "ip.version")],
+                )
                 .bits_full(
                     "ihl",
                     4,
@@ -40,30 +55,61 @@ pub fn eth_ipv4_tcp() -> pb::Ir {
                 )
                 .bits_full("dscp", 6, disp("DSCP", F::Dec), &[])
                 .bits_full("ecn", 2, disp("ECN", F::Dec), &[])
-                .bits_full("total_len", 16, disp("Total Length", F::Dec), &[("tshark.key", "ip.len")])
+                .bits_full(
+                    "total_len",
+                    16,
+                    disp("Total Length", F::Dec),
+                    &[("tshark.key", "ip.len")],
+                )
                 .bits_full("id", 16, disp("Identification", F::Hex), &[])
                 .bits_full("flags", 3, disp("Flags", F::Hex), &[])
                 .bits_full("frag_offset", 13, disp("Fragment Offset", F::Dec), &[])
-                .bits_full("ttl", 8, disp("Time to Live", F::Dec), &[("tshark.key", "ip.ttl")])
+                .bits_full(
+                    "ttl",
+                    8,
+                    disp("Time to Live", F::Dec),
+                    &[("tshark.key", "ip.ttl")],
+                )
                 .bits_full(
                     "protocol",
                     8,
-                    disp("Protocol", F::Dec).labels(&[
-                        (1, "ICMP"),
-                        (6, "TCP"),
-                        (17, "UDP"),
-                    ]),
+                    disp("Protocol", F::Dec).labels(&[(1, "ICMP"), (6, "TCP"), (17, "UDP")]),
                     &[("tshark.key", "ip.proto")],
                 )
-                .bits_full("checksum", 16, disp("Header Checksum", F::Hex), &[("tshark.key", "ip.checksum")])
-                .bits_full("src", 32, disp("Source Address", F::Ipv4), &[("tshark.key", "ip.src")])
-                .bits_full("dst", 32, disp("Destination Address", F::Ipv4), &[("tshark.key", "ip.dst")])
+                .bits_full(
+                    "checksum",
+                    16,
+                    disp("Header Checksum", F::Hex),
+                    &[("tshark.key", "ip.checksum")],
+                )
+                .bits_full(
+                    "src",
+                    32,
+                    disp("Source Address", F::Ipv4),
+                    &[("tshark.key", "ip.src")],
+                )
+                .bits_full(
+                    "dst",
+                    32,
+                    disp("Destination Address", F::Ipv4),
+                    &[("tshark.key", "ip.dst")],
+                )
                 .var_bytes("options", sub(mul(f("ipv4", "ihl"), c(4)), c(20))),
         )
         .header(
             HeaderTypeBuilder::new("tcp")
-                .bits_full("sport", 16, disp("Source Port", F::Dec), &[("tshark.key", "tcp.srcport")])
-                .bits_full("dport", 16, disp("Destination Port", F::Dec), &[("tshark.key", "tcp.dstport")])
+                .bits_full(
+                    "sport",
+                    16,
+                    disp("Source Port", F::Dec),
+                    &[("tshark.key", "tcp.srcport")],
+                )
+                .bits_full(
+                    "dport",
+                    16,
+                    disp("Destination Port", F::Dec),
+                    &[("tshark.key", "tcp.dstport")],
+                )
                 .bits_full("seq", 32, disp("Sequence Number", F::Dec), &[])
                 .bits_full("ack", 32, disp("Acknowledgment Number", F::Dec), &[])
                 .bits_full(

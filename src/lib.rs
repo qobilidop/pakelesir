@@ -1,5 +1,6 @@
 pub mod builder;
 pub mod cli;
+pub mod codegen;
 pub mod examples;
 pub mod fixtures;
 pub mod interp;

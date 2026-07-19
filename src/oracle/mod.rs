@@ -38,7 +38,10 @@ pub(crate) fn normalize(raw: &str) -> Option<u64> {
 pub(crate) fn normalize_typed(raw: &str, format: pb::DisplayFormat) -> Option<u64> {
     match format {
         pb::DisplayFormat::Ipv4 => {
-            let octets: Vec<u64> = raw.split('.').map(|p| p.parse().ok()).collect::<Option<_>>()?;
+            let octets: Vec<u64> = raw
+                .split('.')
+                .map(|p| p.parse().ok())
+                .collect::<Option<_>>()?;
             if octets.len() != 4 || octets.iter().any(|o| *o > 255) {
                 return None;
             }
