@@ -77,6 +77,17 @@ enum Command {
         #[command(subcommand)]
         target: GenTarget,
     },
+    /// Canonicalize an IR file: parse + re-emit in the canonical form
+    /// (what this CLI itself writes). Other authoring surfaces (the
+    /// Python eDSL) pipe through this before equality comparisons.
+    FmtIr {
+        /// IR file (protojson) to canonicalize.
+        #[arg(long)]
+        ir: PathBuf,
+        /// Output path; `-` for stdout. Defaults to stdout.
+        #[arg(long, default_value = "-")]
+        out: PathBuf,
+    },
     /// Write the built-in example IR (the file other tools consume).
     ExportIr {
         /// Output path; `-` for stdout (JSON only).
@@ -355,6 +366,17 @@ pub fn main_with(args: &[&str]) -> Result<i32> {
             }
             Ok(0)
         }
+        Command::FmtIr { ir, out } => {
+            let text = std::fs::read_to_string(&ir)
+                .with_context(|| format!("reading IR from {}", ir.display()))?;
+            let canonical = crate::ir::to_json(&crate::ir::from_json(&text)?)?;
+            if out.as_os_str() == "-" {
+                println!("{canonical}");
+            } else {
+                std::fs::write(&out, canonical)?;
+            }
+            Ok(0)
+        }
         Command::ExportIr { out, binary } => {
             let ir = crate::examples::eth_ipv4_tcp();
             if out.as_os_str() == "-" {
@@ -397,6 +419,33 @@ mod tests {
     #[test]
     fn viz_ok() {
         assert_eq!(main_with(&["pakeles", "viz"]).unwrap(), 0);
+    }
+
+    #[test]
+    fn fmt_ir_canonicalizes_mangled_json() {
+        let ir = crate::examples::eth_ipv4_tcp();
+        let canonical = crate::ir::to_json(&ir).unwrap();
+        // Same document, hostile formatting: compact everything.
+        let mangled = serde_json::to_string(
+            &serde_json::from_str::<serde_json::Value>(&canonical).unwrap(),
+        )
+        .unwrap();
+        let dir = std::env::temp_dir().join("pakeles_fmt_ir");
+        std::fs::create_dir_all(&dir).unwrap();
+        let inp = dir.join("mangled.json");
+        let outp = dir.join("out.json");
+        std::fs::write(&inp, mangled).unwrap();
+        let code = main_with(&[
+            "pakeles",
+            "fmt-ir",
+            "--ir",
+            inp.to_str().unwrap(),
+            "--out",
+            outp.to_str().unwrap(),
+        ])
+        .unwrap();
+        assert_eq!(code, 0);
+        assert_eq!(std::fs::read_to_string(&outp).unwrap(), canonical);
     }
 
     #[test]
