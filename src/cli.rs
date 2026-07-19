@@ -97,6 +97,22 @@ enum GenTarget {
         #[arg(long, default_value = "-")]
         out: PathBuf,
     },
+    /// Portable C99 parser (<name>.h + <name>.c).
+    C {
+        #[arg(long)]
+        ir: Option<PathBuf>,
+        /// Directory to write parser.h and parser.c into.
+        #[arg(long, default_value = ".")]
+        out_dir: PathBuf,
+    },
+    /// Self-contained eBPF C variant.
+    Ebpf {
+        #[arg(long)]
+        ir: Option<PathBuf>,
+        /// Output path; `-` for stdout.
+        #[arg(long, default_value = "-")]
+        out: PathBuf,
+    },
 }
 
 #[derive(Subcommand)]
@@ -271,6 +287,27 @@ pub fn main_with(args: &[&str]) -> Result<i32> {
                 print!("{lua}");
             } else {
                 std::fs::write(&out, lua)?;
+            }
+            Ok(0)
+        }
+        Command::Gen {
+            target: GenTarget::C { ir, out_dir },
+        } => {
+            let arts = crate::codegen::c::generate_c(&load_ir(&ir)?)?;
+            std::fs::create_dir_all(&out_dir)?;
+            std::fs::write(out_dir.join("parser.h"), arts.header)?;
+            std::fs::write(out_dir.join("parser.c"), arts.source)?;
+            eprintln!("wrote parser.h + parser.c to {}", out_dir.display());
+            Ok(0)
+        }
+        Command::Gen {
+            target: GenTarget::Ebpf { ir, out },
+        } => {
+            let c = crate::codegen::c::generate_ebpf(&load_ir(&ir)?)?;
+            if out.as_os_str() == "-" {
+                print!("{c}");
+            } else {
+                std::fs::write(&out, c)?;
             }
             Ok(0)
         }
