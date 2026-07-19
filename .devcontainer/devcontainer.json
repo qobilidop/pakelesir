@@ -1,0 +1,10 @@
+{
+  "name": "pakeles",
+  "build": { "dockerfile": "Dockerfile" },
+  "workspaceFolder": "/work",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/work,type=bind",
+  "mounts": [
+    "source=pakeles-target,target=/target,type=volume",
+    "source=pakeles-cargo,target=/usr/local/cargo/registry,type=volume"
+  ]
+}
