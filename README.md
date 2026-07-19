@@ -1,5 +1,11 @@
 # PakelesIR
 
+> [!WARNING]
+> **Work in progress, iterating fast — don't use this yet.** The IR
+> schema (`v1alpha1`), the CLI, and every API change without notice,
+> and compatibility is deliberately not promised at this stage. Watch
+> the repo if you're curious; don't build on it.
+
 A serializable IR for wire-format parsers, plus the toolchain that makes
 one description yield many artifacts that provably agree: reference
 interpretation, generated dissectors and datapath parsers, validators,
