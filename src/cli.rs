@@ -47,6 +47,12 @@ enum Command {
         #[arg(long, default_value = "-")]
         out: PathBuf,
     },
+    /// Report unreachable states and unsatisfiable select arms.
+    #[cfg(feature = "symex")]
+    Lint {
+        #[arg(long)]
+        ir: Option<PathBuf>,
+    },
     /// Write the built-in example IR (the file other tools consume).
     ExportIr {
         /// Output path; `-` for stdout (JSON only).
@@ -144,6 +150,17 @@ pub fn main_with(args: &[&str]) -> Result<i32> {
                 );
             }
             Ok(if report.mismatches.is_empty() { 0 } else { 1 })
+        }
+        #[cfg(feature = "symex")]
+        Command::Lint { ir } => {
+            let findings = crate::symex::lint::lint(&load_ir(&ir)?)?;
+            for f in &findings {
+                println!("{}: {}", f.location, f.message);
+            }
+            if findings.is_empty() {
+                println!("clean");
+            }
+            Ok(if findings.is_empty() { 0 } else { 1 })
         }
         #[cfg(feature = "symex")]
         Command::Testgen { ir, out } => {
