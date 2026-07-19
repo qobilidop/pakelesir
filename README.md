@@ -50,7 +50,7 @@ graphviz, clang/llvm, and source-built p4c + BMv2):
 ./dev.sh cargo run -- gen lua --out dissector.lua          # Wireshark dissector
 ./dev.sh cargo run -- doc                                  # markdown docs
 ./dev.sh cargo run -- gen c --out-dir .                    # portable C99 parser
-./dev.sh cargo run -- gen ebpf --out ebpf.c                # eBPF variant
+./dev.sh cargo run -- gen ebpf --out parser.bpf.c                # eBPF variant
 ./dev.sh cargo run -- gen p4 --out parser.p4               # P4-16 (v1model)
 ./dev.sh cargo run -- diff bmv2                            # vectors vs BMv2
 ```

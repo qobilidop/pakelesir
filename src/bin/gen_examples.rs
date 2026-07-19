@@ -31,7 +31,10 @@ fn main() -> anyhow::Result<()> {
     let c = pakeles::codegen::c::generate_c(&ir)?;
     std::fs::write(gen.join("parser.h"), c.header)?;
     std::fs::write(gen.join("parser.c"), c.source)?;
-    std::fs::write(gen.join("ebpf.c"), pakeles::codegen::c::generate_ebpf(&ir)?)?;
+    std::fs::write(
+        gen.join("parser.bpf.c"),
+        pakeles::codegen::c::generate_ebpf(&ir)?,
+    )?;
     std::fs::write(
         gen.join("parser.p4"),
         pakeles::codegen::p4::generate_p4(&ir)?,

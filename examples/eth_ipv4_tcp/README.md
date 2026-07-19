@@ -9,7 +9,7 @@ flowchart LR
     PY["eth_ipv4_tcp.py\n(authoring, Python eDSL)"] -->|"emit + fmt-ir"| IR["eth_ipv4_tcp.ir.json\n(normative Pakeles IR)"]
     IR -->|"gen lua"| LUA["gen/dissector.lua"]
     IR -->|"gen c"| C["gen/parser.h/.c"]
-    IR -->|"gen ebpf"| EBPF["gen/ebpf.c"]
+    IR -->|"gen ebpf"| EBPF["gen/parser.bpf.c"]
     IR -->|"gen p4"| P4["gen/parser.p4"]
     IR -->|"doc / viz"| DOCS["gen/doc.md, gen/graph.svg"]
     IR -->|"testgen (symbolic execution)"| V["conformance/\n164 path-complete vectors"]
@@ -38,7 +38,7 @@ drifts from what the toolchain generates, CI fails. Regenerate with
 |---|---|---|
 | [`gen/dissector.lua`](gen/dissector.lua) | Working Wireshark dissector (Lua 5.2) | 500+ field comparisons inside real `tshark`, zero mismatches |
 | [`gen/parser.h`](gen/parser.h) / [`gen/parser.c`](gen/parser.c) | Portable C99 parser (zero-copy, bit-granular) | field-for-field on **all 164 vectors**; compiles `-Wall -Wextra -Werror` clean |
-| [`gen/ebpf.c`](gen/ebpf.c) | Self-contained eBPF variant (verifier-shaped core) | verdict-level on all 164 vectors under the rbpf VM |
+| [`gen/parser.bpf.c`](gen/parser.bpf.c) | Self-contained eBPF variant (verifier-shaped core) | verdict-level on all 164 vectors under the rbpf VM |
 | [`gen/parser.p4`](gen/parser.p4) | P4-16 program (v1model) | verdict-level on all 28 byte-aligned vectors under BMv2 `simple_switch`; `p4test` + `p4c-bm2-ss` warning-free |
 
 ## Derived: presentation
