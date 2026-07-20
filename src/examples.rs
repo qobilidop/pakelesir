@@ -4,8 +4,10 @@
 //! source of truth; `scripts/gen-examples.sh` emits the canonical
 //! `ir.json`. Here we embed that committed file at compile time — this
 //! doubles as the CLI's default IR, so it must work outside the repo
-//! root, which `include_str!` guarantees (and gives a compile-time
-//! parse guarantee for the committed artifact).
+//! root, which `include_str!` guarantees (a compile-time *embedding*
+//! guarantee: the file must exist to build). The parse itself happens
+//! at load time — checked by the `embedded_ir_parses_and_validates`
+//! test below.
 
 use crate::ir::pb;
 

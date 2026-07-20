@@ -19,8 +19,8 @@ makes cross-artifact equivalence provable rather than merely tested.
 Status: slice 6 ("the authoring surface"). One description
 (Ethernet → {IPv4 | IPv6} → {TCP | UDP} — a *branching* parse graph that
 demultiplexes on EtherType and IP protocol)
-is authored in Rust — or in the Python eDSL (`py/`), which produces
-proto-identical IR — serialized as proto3, interpreted, visualized,
+is authored in the Python eDSL (`py/`) and canonicalized by the Rust
+CLI — serialized as proto3, interpreted, visualized,
 differentially tested against `tshark`, compiled by symbolic execution
 into a path-complete conformance suite (every parse path — truncations
 and rejects included — gets a solver-derived witness packet), and compiled into four
@@ -83,10 +83,12 @@ eth = parser("my_parser", max_depth=4, start="ipv4", states={
 eth.save("ir.json")                     # then: pakeles lint ir.json
 ```
 
-The serialized IR stays the only contract: Python authors it, the Rust
-CLI validates and compiles it. The eDSL's `eth_ipvx_l4` example is
-proto-equality-tested against the Rust builder's gallery `ir.json` —
-two authoring surfaces, provably one artifact. See `py/README.md`.
+The serialized IR stays the only contract: the eDSL is the single
+source, and the Rust CLI validates and canonicalizes it. The
+committed gallery `ir.json` is proto-equality-tested against the
+eDSL's output, and separately proven to already be in Rust-canonical
+form — one authoring surface, one provably-canonical artifact. See
+`py/README.md`.
 
 ## Layout
 
