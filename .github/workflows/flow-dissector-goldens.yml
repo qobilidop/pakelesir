@@ -1,8 +1,9 @@
 name: Flow-dissector golden refresh
 
 # Refreshes the kernel-captured `flow_keys` goldens under
-# examples/linux_flow_dissector/conformance/ by running the in-repo BPF
-# flow dissector via BPF_PROG_TEST_RUN on a real Linux kernel.
+# examples/linux_flow_dissector/conformance/ by running upstream
+# bpf_flow.c (pinned, fetched at capture time) via BPF_PROG_TEST_RUN on a
+# real Linux kernel.
 #
 # This is DELIBERATELY SEPARATE from the required `ci.yml` gate: minting
 # goldens needs bpf()/BPF_PROG_TEST_RUN, which needs CAP_BPF/CAP_SYS_ADMIN
@@ -11,11 +12,12 @@ name: Flow-dissector golden refresh
 # ever diffs the goldens already committed here; it never mints them.
 #
 # Run manually (workflow_dispatch) whenever the goldens need refreshing —
-# e.g. after changing oracle/flow_dissector/factory/flow_dissector.bpf.c,
-# or to pick up a new runner kernel version — or let the schedule below
-# catch drift periodically. Either way, review the diff before merging:
-# a changed golden is either "our dissector changed, expected" or "the
-# kernel disagrees with us," and those need different responses.
+# e.g. after changing oracle/flow_dissector/factory/corpus.txt or the
+# pinned bpf_flow.c sha256 in capture.sh, or to pick up a new runner
+# kernel version — or let the schedule below catch drift periodically.
+# Either way, review the diff before merging: a changed golden is either
+# "the corpus/pin changed, expected" or "the kernel disagrees with us,"
+# and those need different responses.
 
 on:
   workflow_dispatch: {}
@@ -37,11 +39,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install clang/llvm + kernel UAPI headers
+      - name: Install clang/llvm + libbpf + kernel UAPI headers
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            clang llvm libc6-dev linux-libc-dev
+            clang llvm libc6-dev linux-libc-dev libbpf-dev
 
       - name: Run the golden factory (needs CAP_BPF/CAP_SYS_ADMIN)
         run: |
