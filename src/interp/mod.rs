@@ -350,122 +350,83 @@ pub fn run_bits(ir: &pb::Ir, input: &crate::testvec::Bits) -> anyhow::Result<Par
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::builder::{
+        arm, f, reject_info, to, v, HeaderTypeBuilder, ParserBuilder, StateBuilder,
+    };
     use crate::examples::eth_ipvx_l4;
     use crate::fixtures::*;
 
-    fn field(res: &ParseResult, instance: &str, name: &str) -> FieldValue {
-        res.headers
-            .iter()
-            .find(|h| h.instance == instance)
-            .unwrap_or_else(|| panic!("no header instance `{instance}`"))
-            .fields
-            .iter()
-            .find(|f| f.name == name)
-            .unwrap_or_else(|| panic!("no field `{instance}.{name}`"))
-            .value
-            .clone()
+    /// Minimal two-header IR for exercising engine mechanics without the
+    /// gallery example: header `a` (16-bit tag) selects into header `b`
+    /// (two 16-bit fields); tag 1 -> parse b -> accept, else reject(info).
+    fn mini() -> pb::Ir {
+        ParserBuilder::new("mini", 3)
+            .header(HeaderTypeBuilder::new("a").bits("tag", 16))
+            .header(HeaderTypeBuilder::new("b").bits("x", 16).bits("y", 16))
+            .state(StateBuilder::new("s0").extract("a").select(
+                vec![f("a", "tag")],
+                vec![arm(vec![v(1)], to("s1"))],
+                reject_info("unknown tag"),
+            ))
+            .state(StateBuilder::new("s1").extract("b").accept())
+            .start("s0")
+            .build()
+            .unwrap()
     }
 
     #[test]
-    fn parses_tcp_packet() {
-        let res = run(&eth_ipvx_l4(), &tcp_packet()).unwrap();
-        assert_eq!(res.outcome, Outcome::Accept);
+    fn example_smoke_accepts_and_rejects() {
+        // One belt-and-suspenders check that the embedded example is
+        // wired up; exhaustive behavior lives in the vector suite.
+        let ir = eth_ipvx_l4();
+        assert_eq!(run(&ir, &tcp_packet()).unwrap().outcome, Outcome::Accept);
         assert_eq!(
-            field(&res, "ethernet", "ethertype"),
-            FieldValue::Uint(0x0800)
+            run(&ir, &ipv6_tcp_packet()).unwrap().outcome,
+            Outcome::Accept
         );
-        assert_eq!(field(&res, "ipv4", "protocol"), FieldValue::Uint(6));
-        assert_eq!(field(&res, "ipv4", "options"), FieldValue::Bytes(vec![]));
-        assert_eq!(field(&res, "tcp", "dport"), FieldValue::Uint(443));
-        let starts: Vec<usize> = res.headers.iter().map(|h| h.start_bit).collect();
-        assert_eq!(starts, vec![0, 112, 272]);
-    }
-
-    #[test]
-    fn parses_ihl6_options() {
-        let res = run(&eth_ipvx_l4(), &tcp_packet_ihl6()).unwrap();
-        assert_eq!(res.outcome, Outcome::Accept);
         assert_eq!(
-            field(&res, "ipv4", "options"),
-            FieldValue::Bytes(vec![0x01, 0x01, 0x01, 0x00])
-        );
-        assert_eq!(res.headers[2].start_bit, 272 + 32);
-        assert_eq!(field(&res, "tcp", "dport"), FieldValue::Uint(443));
-    }
-
-    #[test]
-    fn parses_udp_packet() {
-        let res = run(&eth_ipvx_l4(), &udp_packet()).unwrap();
-        assert_eq!(res.outcome, Outcome::Accept);
-        assert_eq!(field(&res, "ipv4", "protocol"), FieldValue::Uint(17));
-        assert_eq!(field(&res, "udp", "dport"), FieldValue::Uint(443));
-        assert_eq!(res.headers.len(), 3); // ethernet + ipv4 + udp
-    }
-
-    #[test]
-    fn parses_ipv6_tcp_packet() {
-        let res = run(&eth_ipvx_l4(), &ipv6_tcp_packet()).unwrap();
-        assert_eq!(res.outcome, Outcome::Accept);
-        assert_eq!(
-            field(&res, "ethernet", "ethertype"),
-            FieldValue::Uint(0x86DD)
-        );
-        assert_eq!(field(&res, "ipv6", "next_header"), FieldValue::Uint(6));
-        assert_eq!(field(&res, "tcp", "dport"), FieldValue::Uint(443));
-        // eth(112) + ipv6(320) then tcp starts.
-        let starts: Vec<usize> = res.headers.iter().map(|h| h.start_bit).collect();
-        assert_eq!(starts, vec![0, 112, 112 + 320]);
-    }
-
-    #[test]
-    fn rejects_icmp() {
-        let res = run(&eth_ipvx_l4(), &icmp_packet()).unwrap();
-        assert_eq!(
-            res.outcome,
+            run(&ir, &icmp_packet()).unwrap().outcome,
             Outcome::Reject {
                 reason: "unsupported ip protocol".into()
             }
         );
-        assert_eq!(res.headers.len(), 2); // ethernet + ipv4 still extracted
     }
 
     #[test]
-    fn rejects_truncated() {
-        let res = run(&eth_ipvx_l4(), &tcp_packet()[..20]).unwrap();
+    fn rejects_truncated_with_oob_forensics() {
+        // 2 bytes: `a` extracts, `b` runs off the end mid-first-field.
+        let res = run(&mini(), &[0x00, 0x01]).unwrap();
         assert_eq!(
             res.outcome,
             Outcome::Reject {
                 reason: "out of bounds".into()
             }
         );
-    }
-
-    #[test]
-    fn diagnose_forensics_on_truncation() {
-        let res = run(&eth_ipvx_l4(), &tcp_packet()[..20]).unwrap();
         let err = res.error.unwrap();
-        assert_eq!(err.state, "parse_ipv4");
-        assert_eq!(err.instance.as_deref(), Some("ipv4"));
-        assert_eq!(err.field.as_deref(), Some("flags"));
-        assert_eq!(err.bit_offset, 160);
+        assert_eq!(err.state, "s1");
+        assert_eq!(err.instance.as_deref(), Some("b"));
+        assert_eq!(err.field.as_deref(), Some("x"));
+        assert_eq!(err.bit_offset, 16);
         assert_eq!(err.severity, Severity::Error);
-        assert_eq!(res.consumed_bits, 160);
+        assert_eq!(res.consumed_bits, 16);
     }
 
     #[test]
-    fn diagnose_payload_boundary_is_info() {
-        let res = run(&eth_ipvx_l4(), &icmp_packet()).unwrap();
+    fn payload_boundary_reject_is_info() {
+        // tag 2 misses the only arm -> default reject(info).
+        let res = run(&mini(), &[0x00, 0x02]).unwrap();
         let err = res.error.unwrap();
         assert_eq!(err.severity, Severity::Info);
-        assert_eq!(err.reason, "unsupported ip protocol");
-        assert_eq!(res.consumed_bits, 272); // eth + ipv4(ihl=5)
+        assert_eq!(err.reason, "unknown tag");
+        assert_eq!(res.consumed_bits, 16);
     }
 
     #[test]
     fn accept_has_no_error_and_full_consumption() {
-        let res = run(&eth_ipvx_l4(), &tcp_packet()).unwrap();
+        let res = run(&mini(), &[0x00, 0x01, 0xAA, 0xBB, 0xCC, 0xDD]).unwrap();
+        assert_eq!(res.outcome, Outcome::Accept);
         assert!(res.error.is_none());
-        assert_eq!(res.consumed_bits, 54 * 8);
+        assert_eq!(res.consumed_bits, 48);
     }
 
     #[test]
