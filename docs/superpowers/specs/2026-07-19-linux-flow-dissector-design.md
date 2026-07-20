@@ -34,7 +34,7 @@ Rungs 1–4 are precisely Pakeles's deferred TLV / header-stack / sized-region I
 
 The oracle is a **golden-diff**, not a live BPF run in the hot loop:
 
-1. **Golden factory** (runs rarely, privileged): the real upstream `bpf_flow.c`, compiled and loaded as `BPF_PROG_TYPE_FLOW_DISSECTOR`, run over a packet corpus via `BPF_PROG_TEST_RUN`, capturing the returned `struct bpf_flow_keys`. Output is **tagged with the kernel version** (e.g. `flow_keys.linux-6.8.golden.json`), making "agrees with Linux 6.8's flow dissector" a precise, reproducible claim.
+1. **Golden factory** (runs rarely, privileged): the real upstream `bpf_flow.c` (rung 0 uses an in-repo dissector; upstream arrives at rung 1), compiled and loaded as `BPF_PROG_TYPE_FLOW_DISSECTOR`, run over a packet corpus via `BPF_PROG_TEST_RUN`, capturing the returned `struct bpf_flow_keys`. Output is **tagged with the kernel version** (e.g. `flow_keys.linux-6.8.golden.json`), making "agrees with Linux 6.8's flow dissector" a precise, reproducible claim.
 2. **Golden corpus** (committed): `(packet, flow_keys)` pairs. Refreshing = re-running the factory and reviewing the diff.
 3. **`diff flow-dissector` harness** (everyday gate, unprivileged): runs Pakeles's parse, applies the `flow_keys` projection (see below), and compares field-for-field to the committed goldens. **No BPF, no privilege in the normal loop.**
 
@@ -69,7 +69,7 @@ Agreement = matching the subset of `bpf_flow_keys` fields the covered protocols 
 The design doc above is the whole north-star. The **first buildable increment is rung 0, which touches no IR** (it reuses the existing eth/IP/TCP/UDP parsing). Deliverables:
 
 1. **`linux_flow_dissector` example** — its own gallery example (own eDSL program → `ir.json` → gen artifacts), created now per the "own example from day one" decision. Its rung-0 parse covers eth/IPv4/IPv6/TCP/UDP and will look similar to `eth_ipvx_l4`; the two diverge at rung 1. It is the permanent home the initiative grows in and the anchor the goldens/oracle attach to.
-2. **Golden factory** — a tool/script that builds the real upstream `bpf_flow.c` (pinned to a kernel version; via libbpf, since `bpf_flow.c` uses a tail-call prog-array), runs it over the rung-0 packet corpus via `BPF_PROG_TEST_RUN`, and emits version-tagged golden `flow_keys`. Runs privileged (CI / `vmtest` / privileged container).
+2. **Golden factory** — a tool/script that runs a minimal in-repo flow dissector (fidelity-equal to upstream `bpf_flow.c` for eth/IPv4/IPv6/TCP/UDP without options or extension headers) in-kernel via `BPF_PROG_TEST_RUN` over the rung-0 packet corpus, emitting version-tagged golden `flow_keys`. Upstream `bpf_flow.c` (with libbpf and tail-call prog-array) replaces it at rung 1, where its richer parsing is required. Runs privileged (CI / `vmtest` / privileged container).
 3. **Committed golden corpus** — rung-0 packets + captured `flow_keys`, kernel-version-tagged.
 4. **`diff flow-dissector` oracle** — unprivileged harness: Pakeles parse + harness-side `flow_keys` projection (option A) + compare to goldens; wired into the normal gate.
 
