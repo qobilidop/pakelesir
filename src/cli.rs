@@ -475,7 +475,8 @@ mod tests {
             ],
             entries: vec![crate::oracle::flow_dissector::GoldenEntry {
                 packet_hex: pkt.iter().map(|b| format!("{b:02x}")).collect(),
-                keys,
+                disposition: crate::oracle::flow_dissector::Disposition::Ok,
+                keys: Some(keys),
             }],
         };
         let dir = std::env::temp_dir().join("pakeles_diff_flow_dissector");

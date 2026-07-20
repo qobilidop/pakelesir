@@ -22,10 +22,24 @@ pub struct FlowKeys {
     pub ipv6_dst: String,
 }
 
+/// Kernel verdict for a corpus packet: did the flow dissector produce a
+/// flow key (`BPF_OK`) or drop (`BPF_DROP`)? v1 goldens predate the field
+/// and were all accepts — hence the serde default.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum Disposition {
+    #[default]
+    Ok,
+    Drop,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GoldenEntry {
     pub packet_hex: String,
-    pub keys: FlowKeys,
+    #[serde(default)]
+    pub disposition: Disposition,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub keys: Option<FlowKeys>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -153,15 +167,28 @@ pub fn diff_goldens(ir: &pb::Ir, golden: &GoldenFile) -> anyhow::Result<FlowDiff
     };
     for (i, e) in golden.entries.iter().enumerate() {
         let pkt = crate::testvec::hex_decode(&e.packet_hex)?;
-        let ours =
-            project(ir, &pkt)?.ok_or_else(|| anyhow::anyhow!("vector {i}: our parse rejected"))?;
+        let ours = project(ir, &pkt)?;
         report.compared += 1;
-        for field in &golden.keys_subset {
-            let (o, t) = field_pair(field, &ours, &e.keys);
-            if o != t {
-                report
-                    .mismatches
-                    .push(format!("vector {i}: {field}: ours={o} golden={t}"));
+        match (e.disposition, ours) {
+            (Disposition::Drop, None) => {} // agree: kernel drops, we reject
+            (Disposition::Drop, Some(_)) => report
+                .mismatches
+                .push(format!("vector {i}: disposition: ours=accept golden=drop")),
+            (Disposition::Ok, None) => report
+                .mismatches
+                .push(format!("vector {i}: disposition: ours=reject golden=ok")),
+            (Disposition::Ok, Some(ours)) => {
+                let golden_keys = e.keys.as_ref().ok_or_else(|| {
+                    anyhow::anyhow!("vector {i}: ok entry without keys — malformed golden")
+                })?;
+                for field in &golden.keys_subset {
+                    let (o, t) = field_pair(field, &ours, golden_keys);
+                    if o != t {
+                        report
+                            .mismatches
+                            .push(format!("vector {i}: {field}: ours={o} golden={t}"));
+                    }
+                }
             }
         }
     }
@@ -178,15 +205,16 @@ mod tests {
             keys_subset: vec!["nhoff".into()],
             entries: vec![GoldenEntry {
                 packet_hex: "aabb".into(),
-                keys: FlowKeys {
+                disposition: Disposition::Ok,
+                keys: Some(FlowKeys {
                     nhoff: 14,
                     ..Default::default()
-                },
+                }),
             }],
         };
         let s = serde_json::to_string(&g).unwrap();
         let back: GoldenFile = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.entries[0].keys.nhoff, 14);
+        assert_eq!(back.entries[0].keys.as_ref().unwrap().nhoff, 14);
         assert_eq!(back.kernel_version, "6.8.0");
     }
 }
@@ -259,7 +287,8 @@ mod diff_tests {
             ],
             entries: vec![GoldenEntry {
                 packet_hex: pkt.iter().map(|b| format!("{b:02x}")).collect(),
-                keys,
+                disposition: Disposition::Ok,
+                keys: Some(keys),
             }],
         }
     }
@@ -274,9 +303,53 @@ mod diff_tests {
     fn diff_catches_mismatch() {
         let ir = crate::examples::linux_flow_dissector();
         let mut g = golden_from_fixture();
-        g.entries[0].keys.dport = 1; // corrupt
+        g.entries[0].keys.as_mut().unwrap().dport = 1; // corrupt
         let report = diff_goldens(&ir, &g).unwrap();
         assert_eq!(report.mismatches.len(), 1);
+    }
+    #[test]
+    fn drop_entry_agrees_when_we_reject() {
+        // ARP ethertype: kernel drops, our parse rejects — agreement.
+        let ir = crate::examples::linux_flow_dissector();
+        let mut g = golden_from_fixture();
+        g.entries[0].packet_hex = "aabbccddeeff1122334455660806000108000604000111223344\
+             55660a000001aabbccddeeff0a000002"
+            .into();
+        g.entries[0].disposition = Disposition::Drop;
+        g.entries[0].keys = None;
+        let report = diff_goldens(&ir, &g).unwrap();
+        assert_eq!(report.compared, 1);
+        assert!(report.mismatches.is_empty(), "{:#?}", report.mismatches);
+    }
+    #[test]
+    fn drop_entry_mismatches_when_we_accept() {
+        // Kernel claims drop on a packet we accept -> disagreement.
+        let ir = crate::examples::linux_flow_dissector();
+        let mut g = golden_from_fixture();
+        g.entries[0].disposition = Disposition::Drop;
+        g.entries[0].keys = None;
+        let report = diff_goldens(&ir, &g).unwrap();
+        assert_eq!(report.mismatches.len(), 1);
+        assert!(report.mismatches[0].contains("disposition"));
+    }
+    #[test]
+    fn ok_entry_mismatches_when_we_reject() {
+        let ir = crate::examples::linux_flow_dissector();
+        let mut g = golden_from_fixture();
+        g.entries[0].packet_hex = "aabbcc".into(); // truncated -> we reject
+        let report = diff_goldens(&ir, &g).unwrap();
+        assert_eq!(report.mismatches.len(), 1);
+        assert!(report.mismatches[0].contains("disposition"));
+    }
+    #[test]
+    fn v1_golden_without_disposition_still_parses() {
+        let s = r#"{"kernel_version":"6.8.0","keys_subset":["nhoff"],
+            "entries":[{"packet_hex":"aabb","keys":{"nhoff":14,"thoff":0,
+            "n_proto":0,"addr_proto":0,"ip_proto":0,"sport":0,"dport":0,
+            "ipv4_src":"","ipv4_dst":"","ipv6_src":"","ipv6_dst":""}}]}"#;
+        let g: GoldenFile = serde_json::from_str(s).unwrap();
+        assert_eq!(g.entries[0].disposition, Disposition::Ok);
+        assert_eq!(g.entries[0].keys.as_ref().unwrap().nhoff, 14);
     }
 }
 
