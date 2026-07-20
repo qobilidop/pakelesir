@@ -75,7 +75,7 @@ class Expr(Operand):
     lhs: Expr | None = None
     rhs: Expr | None = None
     constant: int | None = None
-    ref: FieldSpec | None = None
+    ref: FieldSpec | BoundField | None = None
 
     def as_expr(self) -> Expr:
         return self
@@ -120,6 +120,32 @@ class FieldSpec(Operand):
     annotations: dict[str, str] = dc_field(default_factory=dict[str, str])
     name: str = ""
     header: str = ""
+
+    def as_expr(self) -> Expr:
+        return Expr(ref=self)
+
+
+@dataclass(frozen=True)
+class BoundField(Operand):
+    """A `FieldSpec` bound to a header *instance* name
+    (`VLAN["vlan_q"].vid`). Presents the same (name, header, width_bits)
+    surface as `FieldSpec`, with `header` = the instance name, so select
+    keys and expressions accept either."""
+
+    spec: FieldSpec
+    instance: str
+
+    @property
+    def width_bits(self) -> int | None:
+        return self.spec.width_bits
+
+    @property
+    def name(self) -> str:
+        return self.spec.name
+
+    @property
+    def header(self) -> str:
+        return self.instance
 
     def as_expr(self) -> Expr:
         return Expr(ref=self)

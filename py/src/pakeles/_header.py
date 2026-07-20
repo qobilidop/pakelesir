@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 
-from pakeles._expr import Expr, FieldSpec, Operand, coerce_expr
+from pakeles._expr import BoundField, Expr, FieldSpec, Operand, coerce_expr
 from pakeles._pb import ir_pb2
 
 
@@ -80,6 +80,14 @@ class Header:
     def __init__(self) -> None:
         raise TypeError("Header classes are declarations; do not instantiate")
 
+    def __class_getitem__(cls, name: str) -> Instance:
+        """`VLAN["vlan_q"]`: a named extraction of this header type.
+        The IR schema keys field references by header *instance*; the
+        default instance shares the header type's name."""
+        if not name:
+            raise TypeError(f"instance name must be a non-empty string, got {name!r}")
+        return Instance(cls, name)
+
     @classmethod
     def ir_name(cls) -> str:
         return cls._name
@@ -106,3 +114,26 @@ class Header:
             for k, v in sorted(f.annotations.items()):
                 pf.annotations[k] = v
         return ht
+
+
+class Instance:
+    """A (header type, instance name) pair; see `Header.__class_getitem__`.
+    Attribute access yields `BoundField` references bound to the name."""
+
+    def __init__(self, header: type[Header], name: str) -> None:
+        self._header = header
+        self._name = name
+
+    @property
+    def header_type(self) -> type[Header]:
+        return self._header
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def __getattr__(self, attr: str) -> BoundField:
+        for f in self._header._fields:  # type: ignore[attr-defined]
+            if f.name == attr:
+                return BoundField(spec=f, instance=self._name)
+        raise AttributeError(f"{self._header.__name__} has no field {attr!r}")
