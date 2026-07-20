@@ -13,9 +13,7 @@ fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all(&conformance)?;
     // The eDSL is authoritative; phase 1 (scripts/gen-examples.sh) has
     // already written the canonical ir.json. Read it, don't rebuild it.
-    let ir = pakeles::ir::from_json(&std::fs::read_to_string(
-        dir.join("eth_ipvx_l4.ir.json"),
-    )?)?;
+    let ir = pakeles::ir::from_json(&std::fs::read_to_string(dir.join("eth_ipvx_l4.ir.json"))?)?;
     // The Python eDSL authoring source (the gallery's *input* twin):
     // canonical copy lives in the py package; mirrored here for browsing.
     std::fs::copy(
