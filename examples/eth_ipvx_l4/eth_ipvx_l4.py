@@ -118,3 +118,7 @@ def eth_ipvx_l4() -> Parser:
             "parse_udp": extract(UDP).accept(),
         },
     )
+
+
+if __name__ == "__main__":
+    print(eth_ipvx_l4().to_json())

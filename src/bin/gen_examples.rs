@@ -11,9 +11,11 @@ fn main() -> anyhow::Result<()> {
     let conformance = dir.join("conformance");
     std::fs::create_dir_all(&gen)?;
     std::fs::create_dir_all(&conformance)?;
-    let ir = pakeles::examples::eth_ipvx_l4();
-
-    std::fs::write(dir.join("eth_ipvx_l4.ir.json"), pakeles::ir::to_json(&ir)?)?;
+    // The eDSL is authoritative; phase 1 (scripts/gen-examples.sh) has
+    // already written the canonical ir.json. Read it, don't rebuild it.
+    let ir = pakeles::ir::from_json(&std::fs::read_to_string(
+        dir.join("eth_ipvx_l4.ir.json"),
+    )?)?;
     // The Python eDSL authoring source (the gallery's *input* twin):
     // canonical copy lives in the py package; mirrored here for browsing.
     std::fs::copy(
