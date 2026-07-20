@@ -122,9 +122,16 @@ fn field_pair(name: &str, ours: &FlowKeys, golden: &FlowKeys) -> (String, String
     }
 }
 
+/// The conformance directory holding the committed goldens, shared by the
+/// CLI's default `--goldens` resolution and the `committed_goldens_agree`
+/// gate test.
+pub const CONFORMANCE_DIR: &str = "examples/linux_flow_dissector/conformance";
+
 /// Find the committed kernel-captured golden file under `dir` (filename
 /// starts with `flow_keys.linux-`). Shared by the CLI's default `--goldens`
 /// resolution and the `committed_goldens_agree` gate test.
+// TODO(rung-1): when multiple kernel-version goldens exist, diff all or
+// pick/pin deterministically (find() order is unspecified).
 pub fn discover_committed_golden(dir: &std::path::Path) -> Option<std::path::PathBuf> {
     std::fs::read_dir(dir)
         .ok()?
@@ -284,7 +291,7 @@ mod gate_tests {
     /// investigate; do NOT edit the golden file to force green.
     #[test]
     fn committed_goldens_agree() {
-        let dir = std::path::Path::new("examples/linux_flow_dissector/conformance");
+        let dir = std::path::Path::new(CONFORMANCE_DIR);
         let golden_path = discover_committed_golden(dir).expect("a committed golden file exists");
         let g: GoldenFile =
             serde_json::from_str(&std::fs::read_to_string(golden_path).unwrap()).unwrap();

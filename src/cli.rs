@@ -268,7 +268,7 @@ pub fn main_with(args: &[&str]) -> Result<i32> {
             let goldens = match goldens {
                 Some(p) => p,
                 None => crate::oracle::flow_dissector::discover_committed_golden(
-                    std::path::Path::new("examples/linux_flow_dissector/conformance"),
+                    std::path::Path::new(crate::oracle::flow_dissector::CONFORMANCE_DIR),
                 )
                 .context(
                     "no --goldens given and no committed flow_keys.linux-*.golden.json \

@@ -23,6 +23,10 @@ static int load_prog(const char *path) {
     FILE *f = fopen(path, "rb");
     if (!f) { perror("fopen prog"); exit(1); }
     fseek(f, 0, SEEK_END); long sz = ftell(f); fseek(f, 0, SEEK_SET);
+    if (sz < 8 || sz % 8 != 0) {
+        fprintf(stderr, "bad prog size %ld (must be a nonzero multiple of 8)\n", sz);
+        exit(1);
+    }
     void *insns = malloc(sz);
     if (!insns) { perror("malloc"); exit(1); }
     if (fread(insns, 1, sz, f) != (size_t)sz) { perror("fread prog"); exit(1); }

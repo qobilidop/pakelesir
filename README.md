@@ -112,9 +112,11 @@ Regenerate the gallery from its single source (the eDSL):
 
 [`examples/linux_flow_dissector/`](examples/linux_flow_dissector/) is a
 north-star example: its `diff flow-dissector` oracle checks that Pakeles's
-extracted flow keys agree with the Linux kernel's own flow dissector, via
-golden `flow_keys` captured by running a BPF program in the kernel
-(`BPF_PROG_TEST_RUN`). That capture needs real kernel privilege
+extracted flow keys agree with a flow dissector run in the kernel (rung 0:
+an in-repo dissector, fidelity-equal to upstream `bpf_flow.c` for these
+protocols; upstream arrives at rung 1), via golden `flow_keys` captured by
+running a BPF program in the kernel (`BPF_PROG_TEST_RUN`). That capture
+needs real kernel privilege
 (`CAP_BPF`/`CAP_SYS_ADMIN`), which the normal `./dev.sh` container
 deliberately doesn't have — so the golden factory is **privileged and
 out-of-gate**, run through a separate `dev-priv.sh` (`docker run

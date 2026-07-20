@@ -7,23 +7,33 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 from google.protobuf import json_format
 
 from pakeles._pb import ir_pb2
 from pakeles.examples.eth_ipvx_l4 import eth_ipvx_l4
+from pakeles.examples.linux_flow_dissector import linux_flow_dissector
 
-GALLERY = Path(__file__).resolve().parents[2] / "examples/eth_ipvx_l4/eth_ipvx_l4.ir.json"
+ROOT = Path(__file__).resolve().parents[2]
 SRC = Path(__file__).resolve().parents[1] / "src"
 
+BUILDERS = {
+    "eth_ipvx_l4": eth_ipvx_l4,
+    "linux_flow_dissector": linux_flow_dissector,
+}
 
-def test_python_authoring_matches_gallery() -> None:
-    ours = eth_ipvx_l4().to_pb()
-    committed = json_format.Parse(GALLERY.read_text(), ir_pb2.Ir())
+
+@pytest.mark.parametrize("name", ["eth_ipvx_l4", "linux_flow_dissector"])
+def test_python_authoring_matches_gallery(name: str) -> None:
+    gallery = ROOT / f"examples/{name}/{name}.ir.json"
+    ours = BUILDERS[name]().to_pb()
+    committed = json_format.Parse(gallery.read_text(), ir_pb2.Ir())
     assert ours == committed
 
 
-def test_own_json_roundtrips_to_same_proto() -> None:
-    p = eth_ipvx_l4()
+@pytest.mark.parametrize("name", ["eth_ipvx_l4", "linux_flow_dissector"])
+def test_own_json_roundtrips_to_same_proto(name: str) -> None:
+    p = BUILDERS[name]()
     assert json_format.Parse(p.to_json(), ir_pb2.Ir()) == p.to_pb()
 
 
