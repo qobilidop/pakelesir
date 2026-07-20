@@ -151,6 +151,16 @@ enum Oracle {
         #[arg(long, default_value = "examples/eth_ipvx_l4/conformance/vectors.json")]
         vectors: PathBuf,
     },
+    /// Diff our projected flow_keys against kernel-captured goldens.
+    FlowDissector {
+        #[arg(long)]
+        ir: Option<PathBuf>,
+        #[arg(
+            long,
+            default_value = "examples/linux_flow_dissector/conformance/flow_keys.golden.json"
+        )]
+        goldens: PathBuf,
+    },
 }
 
 fn load_ir(path: &Option<PathBuf>) -> Result<pb::Ir> {
@@ -241,6 +251,28 @@ pub fn main_with(args: &[&str]) -> Result<i32> {
                 "{} vectors compared ({} bit-granular skipped), {} mismatches",
                 report.compared,
                 report.skipped_bit_granular,
+                report.mismatches.len()
+            );
+            for m in &report.mismatches {
+                println!("  {m}");
+            }
+            Ok(if report.mismatches.is_empty() { 0 } else { 1 })
+        }
+        Command::Diff {
+            oracle: Oracle::FlowDissector { ir, goldens },
+        } => {
+            let ir = match &ir {
+                None => crate::examples::linux_flow_dissector(),
+                Some(_) => load_ir(&ir)?,
+            };
+            let golden: crate::oracle::flow_dissector::GoldenFile =
+                serde_json::from_str(&std::fs::read_to_string(&goldens).with_context(|| {
+                    format!("reading flow-dissector goldens from {}", goldens.display())
+                })?)?;
+            let report = crate::oracle::flow_dissector::diff_goldens(&ir, &golden)?;
+            println!(
+                "{} vectors compared, {} mismatches",
+                report.compared,
                 report.mismatches.len()
             );
             for m in &report.mismatches {
@@ -413,6 +445,41 @@ mod tests {
         }
         let code =
             main_with(&["pakeles", "diff", "tshark", "--pcap", "testdata/basic.pcap"]).unwrap();
+        assert_eq!(code, 0);
+    }
+
+    #[test]
+    fn diff_flow_dissector_on_generated_golden_green() {
+        let ir = crate::examples::linux_flow_dissector();
+        let pkt = crate::fixtures::tcp_packet();
+        let keys = crate::oracle::flow_dissector::project(&ir, &pkt)
+            .unwrap()
+            .unwrap();
+        let golden = crate::oracle::flow_dissector::GoldenFile {
+            kernel_version: "test".into(),
+            keys_subset: vec![
+                "nhoff".into(),
+                "thoff".into(),
+                "sport".into(),
+                "dport".into(),
+            ],
+            entries: vec![crate::oracle::flow_dissector::GoldenEntry {
+                packet_hex: pkt.iter().map(|b| format!("{b:02x}")).collect(),
+                keys,
+            }],
+        };
+        let dir = std::env::temp_dir().join("pakeles_diff_flow_dissector");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("golden.json");
+        std::fs::write(&path, serde_json::to_string(&golden).unwrap()).unwrap();
+        let code = main_with(&[
+            "pakeles",
+            "diff",
+            "flow-dissector",
+            "--goldens",
+            path.to_str().unwrap(),
+        ])
+        .unwrap();
         assert_eq!(code, 0);
     }
 

@@ -96,6 +96,56 @@ fn hex(b: Vec<u8>) -> String {
     b.iter().map(|x| format!("{x:02x}")).collect()
 }
 
+/// Report from diffing our projected `flow_keys` against a `GoldenFile`.
+pub struct FlowDiffReport {
+    pub compared: usize,
+    pub mismatches: Vec<String>,
+}
+
+/// Stringify one `keys_subset` field from both `ours` and `golden` for
+/// comparison. Unknown field names surface as a guaranteed mismatch rather
+/// than silently passing.
+fn field_pair(name: &str, ours: &FlowKeys, golden: &FlowKeys) -> (String, String) {
+    match name {
+        "nhoff" => (ours.nhoff.to_string(), golden.nhoff.to_string()),
+        "thoff" => (ours.thoff.to_string(), golden.thoff.to_string()),
+        "n_proto" => (ours.n_proto.to_string(), golden.n_proto.to_string()),
+        "addr_proto" => (ours.addr_proto.to_string(), golden.addr_proto.to_string()),
+        "ip_proto" => (ours.ip_proto.to_string(), golden.ip_proto.to_string()),
+        "sport" => (ours.sport.to_string(), golden.sport.to_string()),
+        "dport" => (ours.dport.to_string(), golden.dport.to_string()),
+        "ipv4_src" => (ours.ipv4_src.clone(), golden.ipv4_src.clone()),
+        "ipv4_dst" => (ours.ipv4_dst.clone(), golden.ipv4_dst.clone()),
+        "ipv6_src" => (ours.ipv6_src.clone(), golden.ipv6_src.clone()),
+        "ipv6_dst" => (ours.ipv6_dst.clone(), golden.ipv6_dst.clone()),
+        _ => ("<unknown-field>".into(), name.into()),
+    }
+}
+
+/// Diff our `project`ed `flow_keys` against a golden file's entries, over
+/// the golden's declared `keys_subset` fields.
+pub fn diff_goldens(ir: &pb::Ir, golden: &GoldenFile) -> anyhow::Result<FlowDiffReport> {
+    let mut report = FlowDiffReport {
+        compared: 0,
+        mismatches: Vec::new(),
+    };
+    for (i, e) in golden.entries.iter().enumerate() {
+        let pkt = crate::testvec::hex_decode(&e.packet_hex)?;
+        let ours =
+            project(ir, &pkt)?.ok_or_else(|| anyhow::anyhow!("vector {i}: our parse rejected"))?;
+        report.compared += 1;
+        for field in &golden.keys_subset {
+            let (o, t) = field_pair(field, &ours, &e.keys);
+            if o != t {
+                report
+                    .mismatches
+                    .push(format!("vector {i}: {field}: ours={o} golden={t}"));
+            }
+        }
+    }
+    Ok(report)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -167,5 +217,43 @@ mod project_tests {
         assert_eq!(k.dport, 443);
         assert_eq!(k.ipv4_src, "0a000001");
         assert_eq!(k.ipv4_dst, "0a000002");
+    }
+}
+
+#[cfg(test)]
+mod diff_tests {
+    use super::*;
+    fn golden_from_fixture() -> GoldenFile {
+        let ir = crate::examples::linux_flow_dissector();
+        let pkt = crate::fixtures::tcp_packet();
+        let keys = super::project(&ir, &pkt).unwrap().unwrap();
+        GoldenFile {
+            kernel_version: "test".into(),
+            keys_subset: vec![
+                "nhoff".into(),
+                "thoff".into(),
+                "sport".into(),
+                "dport".into(),
+            ],
+            entries: vec![GoldenEntry {
+                packet_hex: pkt.iter().map(|b| format!("{b:02x}")).collect(),
+                keys,
+            }],
+        }
+    }
+    #[test]
+    fn diff_green_on_self() {
+        let ir = crate::examples::linux_flow_dissector();
+        let report = diff_goldens(&ir, &golden_from_fixture()).unwrap();
+        assert_eq!(report.compared, 1);
+        assert!(report.mismatches.is_empty(), "{:#?}", report.mismatches);
+    }
+    #[test]
+    fn diff_catches_mismatch() {
+        let ir = crate::examples::linux_flow_dissector();
+        let mut g = golden_from_fixture();
+        g.entries[0].keys.dport = 1; // corrupt
+        let report = diff_goldens(&ir, &g).unwrap();
+        assert_eq!(report.mismatches.len(), 1);
     }
 }
