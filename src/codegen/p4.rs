@@ -7,8 +7,11 @@
 //! error code — and the deparser emits only that verdict, so the BMv2
 //! differential observes exactly (bitmap, err) per packet.
 //!
-//! Cyclic state graphs are rejected: P4 loops need header stacks, which
-//! arrive with the TLV slice. `max_depth` is vacuous on a DAG.
+//! Cyclic state graphs are realized with header stacks: an instance whose
+//! extracting state lies on a cycle becomes parallel `[max_depth]` stacks
+//! (one per segment), extracted with `.next`, referenced via `.last`, and
+//! tested for validity through element `[0]`. On a DAG no instance is
+//! stacked, so `max_depth` is vacuous and the emitted P4 is unchanged.
 
 use crate::ir::pb;
 use anyhow::{bail, Context, Result};
@@ -147,15 +150,33 @@ fn member_of_field(parser: &pb::Parser, r: &pb::FieldRef) -> Result<String> {
 }
 
 /// Expressions evaluate in bit<64> (field widths are <= 64).
-fn expr_p4(e: &pb::Expr, parser: &pb::Parser) -> Result<String> {
+fn expr_p4(
+    e: &pb::Expr,
+    parser: &pb::Parser,
+    stacked: &std::collections::HashSet<String>,
+) -> Result<String> {
     Ok(match e.kind.as_ref().context("empty expression")? {
         pb::expr::Kind::Constant(v) => format!("64w{v}"),
         pb::expr::Kind::Field(r) => {
-            format!("(bit<64>)hdr.{}.{}", member_of_field(parser, r)?, r.field)
+            let member = member_of_field(parser, r)?;
+            // member_of_field returns e.g. "ext_opt_s0"; the instance is r.header.
+            if stacked.contains(&r.header) {
+                format!("(bit<64>)hdr.{member}.last.{}", r.field)
+            } else {
+                format!("(bit<64>)hdr.{member}.{}", r.field)
+            }
         }
         pb::expr::Kind::Bin(b) => {
-            let l = expr_p4(b.lhs.as_deref().context("binop missing lhs")?, parser)?;
-            let r = expr_p4(b.rhs.as_deref().context("binop missing rhs")?, parser)?;
+            let l = expr_p4(
+                b.lhs.as_deref().context("binop missing lhs")?,
+                parser,
+                stacked,
+            )?;
+            let r = expr_p4(
+                b.rhs.as_deref().context("binop missing rhs")?,
+                parser,
+                stacked,
+            )?;
             let op = match pb::BinOpKind::try_from(b.op) {
                 Ok(pb::BinOpKind::Add) => "+",
                 Ok(pb::BinOpKind::Sub) => "-",
@@ -230,38 +251,49 @@ fn state_targets(s: &pb::State) -> Vec<String> {
     out
 }
 
-/// DFS cycle check over the state graph.
-fn check_acyclic(parser: &pb::Parser) -> Result<()> {
-    fn visit(
-        parser: &pb::Parser,
-        name: &str,
-        color: &mut std::collections::HashMap<String, u8>,
-    ) -> Result<()> {
-        match color.get(name) {
-            Some(1) => bail!(
-                "state graph has a cycle through `{name}`: \
-                 P4 emission requires a DAG until header stacks land (TLV slice)"
-            ),
-            Some(2) => return Ok(()),
-            _ => {}
+/// Instances whose extracting state lies on a cycle (is reachable from
+/// itself) — these must be realized as header stacks. Computed by a DFS
+/// reachability check per state; small graphs, so O(V·E) is fine.
+pub(crate) fn stacked_instances(parser: &pb::Parser) -> std::collections::HashSet<String> {
+    fn reaches_self(parser: &pb::Parser, start: &str) -> bool {
+        let mut stack = vec![];
+        let mut seen = std::collections::HashSet::new();
+        if let Some(s) = parser.states.iter().find(|s| s.name == start) {
+            stack.extend(state_targets(s));
         }
-        color.insert(name.to_string(), 1);
-        if let Some(s) = parser.states.iter().find(|s| s.name == name) {
-            for t in state_targets(s) {
-                visit(parser, &t, color)?;
+        while let Some(n) = stack.pop() {
+            if n == start {
+                return true;
+            }
+            if !seen.insert(n.clone()) {
+                continue;
+            }
+            if let Some(s) = parser.states.iter().find(|s| s.name == n) {
+                stack.extend(state_targets(s));
             }
         }
-        color.insert(name.to_string(), 2);
-        Ok(())
+        false
     }
-    let mut color = std::collections::HashMap::new();
-    visit(parser, &parser.start_state, &mut color)
+    let mut out = std::collections::HashSet::new();
+    for s in &parser.states {
+        if reaches_self(parser, &s.name) {
+            for ex in &s.extracts {
+                let inst = if ex.instance.is_empty() {
+                    ex.header_type.clone()
+                } else {
+                    ex.instance.clone()
+                };
+                out.insert(inst);
+            }
+        }
+    }
+    out
 }
 
 pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
     let parser = ir.parser.as_ref().context("IR has no parser")?;
-    check_acyclic(parser)?;
     let insts = instance_order(parser);
+    let stacked = stacked_instances(parser);
     if insts.len() > 8 {
         bail!(
             "verdict bitmap supports at most 8 header instances, got {}",
@@ -331,11 +363,17 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
     writeln!(w, "    verdict_t verdict;")?;
     for (inst, _) in &insts {
         let ht = header_type_of(parser, inst)?;
+        let is_stacked = stacked.contains(inst);
         for (i, seg) in segments(ht).iter().enumerate() {
             let member = seg_member(inst, i, seg);
-            match seg {
-                Seg::Fixed(_) => writeln!(w, "    {inst}_s{i}_t {member};")?,
-                Seg::Var(_) => writeln!(w, "    {inst}_v{i}_t {member};")?,
+            let tname = match seg {
+                Seg::Fixed(_) => format!("{inst}_s{i}_t"),
+                Seg::Var(_) => format!("{inst}_v{i}_t"),
+            };
+            if is_stacked {
+                writeln!(w, "    {tname}[{}] {member};", parser.max_depth)?;
+            } else {
+                writeln!(w, "    {tname} {member};")?;
             }
         }
     }
@@ -363,10 +401,16 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
                 &ex.instance
             };
             let ht = header_type_of(parser, inst)?;
+            let is_stacked = stacked.contains(inst.as_str());
             for (i, seg) in segments(ht).iter().enumerate() {
                 let member = seg_member(inst, i, seg);
+                let tgt = if is_stacked {
+                    format!("hdr.{member}.next")
+                } else {
+                    format!("hdr.{member}")
+                };
                 match seg {
-                    Seg::Fixed(_) => writeln!(w, "        pkt.extract(hdr.{member});")?,
+                    Seg::Fixed(_) => writeln!(w, "        pkt.extract({tgt});")?,
                     Seg::Var(f) => {
                         let expr = match f.width.as_ref().and_then(|x| x.width.as_ref()) {
                             Some(pb::field_width::Width::ByteLen(e)) => e,
@@ -374,8 +418,8 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
                         };
                         writeln!(
                             w,
-                            "        pkt.extract(hdr.{member}, (bit<32>)(64w8 * {}));",
-                            expr_p4(expr, parser)?
+                            "        pkt.extract({tgt}, (bit<32>)(64w8 * {}));",
+                            expr_p4(expr, parser, &stacked)?
                         )?;
                     }
                 }
@@ -389,7 +433,7 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
                 let keys = sel
                     .keys
                     .iter()
-                    .map(|k| expr_p4(k, parser))
+                    .map(|k| expr_p4(k, parser, &stacked))
                     .collect::<Result<Vec<_>>>()?;
                 writeln!(w, "        transition select({}) {{", keys.join(", "))?;
                 for arm in &sel.arms {
@@ -447,11 +491,12 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
         let segs = segments(ht);
         let last = segs.len() - 1;
         let member = seg_member(inst, last, &segs[last]);
-        writeln!(
-            w,
-            "        if (hdr.{member}.isValid()) {{ bm = bm | 8w{}; }}",
-            1u32 << idx
-        )?;
+        let valid = if stacked.contains(inst) {
+            format!("hdr.{member}[0].isValid()")
+        } else {
+            format!("hdr.{member}.isValid()")
+        };
+        writeln!(w, "        if ({valid}) {{ bm = bm | 8w{}; }}", 1u32 << idx)?;
     }
     writeln!(w, "        hdr.verdict.bitmap = bm;")?;
     writeln!(w, "        bit<8> err = 8w255;")?;
@@ -507,6 +552,20 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `eth_ipvx_l4` with `parse_tcp` looped back to `parse_ethernet`, so
+    /// `ethernet`/`ipv4`/`ipv6`/`tcp` all lie on a cycle (are stacked).
+    fn cyclic_ir() -> pb::Ir {
+        let mut ir = crate::examples::eth_ipvx_l4();
+        let p = ir.parser.as_mut().unwrap();
+        let tcp = p.states.iter_mut().find(|s| s.name == "parse_tcp").unwrap();
+        tcp.transition = Some(pb::Transition {
+            kind: Some(pb::transition::Kind::Direct(pb::Target {
+                kind: Some(pb::target::Kind::State("parse_ethernet".into())),
+            })),
+        });
+        ir
+    }
 
     #[test]
     fn ipv4_splits_into_fixed_then_var() {
@@ -575,17 +634,32 @@ mod tests {
     }
 
     #[test]
-    fn cyclic_graph_is_rejected() {
-        let mut ir = crate::examples::eth_ipvx_l4();
-        let p = ir.parser.as_mut().unwrap();
-        let tcp = p.states.iter_mut().find(|s| s.name == "parse_tcp").unwrap();
-        tcp.transition = Some(pb::Transition {
-            kind: Some(pb::transition::Kind::Direct(pb::Target {
-                kind: Some(pb::target::Kind::State("parse_ethernet".into())),
-            })),
-        });
-        let err = generate_p4(&ir).unwrap_err().to_string();
-        assert!(err.contains("cycle"), "unexpected error: {err}");
+    fn cyclic_graph_emits_header_stack() {
+        // Make parse_tcp loop back to parse_ethernet: `ethernet` is now
+        // extracted on a cycle => stacked.
+        let ir = cyclic_ir();
+        assert!(!stacked_instances(ir.parser.as_ref().unwrap()).is_empty()); // sanity
+        let p4 = generate_p4(&ir).unwrap(); // no longer errors
+
+        // ethernet is stacked -> parallel stack member(s) + .next extract + .last ref.
+        assert!(p4.contains("ethernet_s0_t["), "no header stack: {p4}");
+        assert!(p4.contains("pkt.extract(hdr.ethernet_s0.next)"), "{p4}");
+        assert!(p4.contains("hdr.ethernet_s0.last."), "{p4}");
+        // bitmap for a stacked instance tests element 0.
+        assert!(p4.contains("hdr.ethernet_s0[0].isValid()"), "{p4}");
+        // non-stacked instances keep scalar members/extracts. (udp is off
+        // the cycle; ipv4 is *on* it, so ipv4 is stacked — see
+        // stacked_instances_detects_self_reachable.)
+        assert!(p4.contains("pkt.extract(hdr.udp_s0);"), "{p4}");
+    }
+
+    #[test]
+    fn stacked_instances_detects_self_reachable() {
+        let ir = cyclic_ir();
+        let stacked = stacked_instances(ir.parser.as_ref().unwrap());
+        assert!(stacked.contains("ethernet"));
+        assert!(stacked.contains("ipv4")); // also on the cycle
+        assert!(!stacked.contains("udp")); // udp is off the cycle
     }
 
     #[test]
@@ -625,6 +699,34 @@ mod tests {
         assert!(
             !stderr.contains("warning"),
             "p4test warnings:\n{stderr}\n---\n{p4}"
+        );
+    }
+
+    #[test]
+    fn cyclic_p4_compiles_with_p4test() {
+        if std::process::Command::new("p4test")
+            .arg("--version")
+            .output()
+            .is_err()
+        {
+            eprintln!("skipping: p4test not available");
+            return;
+        }
+        // The synthetic looped IR must emit header-stack P4 that p4c accepts
+        // (`.next`/`.last`/`[0]` on `[max_depth]` stacks).
+        let p4 = generate_p4(&cyclic_ir()).unwrap();
+        let dir = std::env::temp_dir().join("pakeles_p4test_cyclic");
+        std::fs::create_dir_all(&dir).unwrap();
+        let src = dir.join("parser.p4");
+        std::fs::write(&src, &p4).unwrap();
+        let out = std::process::Command::new("p4test")
+            .arg(&src)
+            .output()
+            .unwrap();
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            out.status.success(),
+            "p4test rejected cyclic P4:\n{stderr}\n---\n{p4}"
         );
     }
 }
