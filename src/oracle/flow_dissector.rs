@@ -20,6 +20,12 @@ pub struct FlowKeys {
     pub ipv4_dst: String,
     pub ipv6_src: String,
     pub ipv6_dst: String,
+    #[serde(default)]
+    pub flow_label: u32,
+    #[serde(default)]
+    pub is_frag: bool,
+    #[serde(default)]
+    pub is_first_frag: bool,
 }
 
 /// Kernel verdict for a corpus packet: did the flow dissector produce a
@@ -139,6 +145,12 @@ fn field_pair(name: &str, ours: &FlowKeys, golden: &FlowKeys) -> (String, String
         "ipv4_dst" => (ours.ipv4_dst.clone(), golden.ipv4_dst.clone()),
         "ipv6_src" => (ours.ipv6_src.clone(), golden.ipv6_src.clone()),
         "ipv6_dst" => (ours.ipv6_dst.clone(), golden.ipv6_dst.clone()),
+        "flow_label" => (ours.flow_label.to_string(), golden.flow_label.to_string()),
+        "is_frag" => (ours.is_frag.to_string(), golden.is_frag.to_string()),
+        "is_first_frag" => (
+            ours.is_first_frag.to_string(),
+            golden.is_first_frag.to_string(),
+        ),
         _ => ("<unknown-field>".into(), name.into()),
     }
 }
@@ -431,6 +443,20 @@ mod diff_tests {
         let report = diff_goldens(&ir, &g).unwrap();
         assert_eq!(report.mismatches.len(), 1);
         assert!(report.mismatches[0].contains("disposition"));
+    }
+    #[test]
+    fn v2_golden_without_v3_fields_still_parses() {
+        // A v2 "ok" entry lacking flow_label/is_frag/is_first_frag must
+        // deserialize with those fields defaulted (0 / false).
+        let s = r#"{"kernel_version":"6.8.0","keys_subset":["nhoff"],
+            "entries":[{"packet_hex":"aabb","disposition":"ok","keys":{"nhoff":14,
+            "thoff":0,"n_proto":0,"addr_proto":0,"ip_proto":0,"sport":0,"dport":0,
+            "ipv4_src":"","ipv4_dst":"","ipv6_src":"","ipv6_dst":""}}]}"#;
+        let g: GoldenFile = serde_json::from_str(s).unwrap();
+        let k = g.entries[0].keys.as_ref().unwrap();
+        assert_eq!(k.flow_label, 0);
+        assert!(!k.is_frag);
+        assert!(!k.is_first_frag);
     }
     #[test]
     fn v1_golden_without_disposition_still_parses() {
