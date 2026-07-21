@@ -43,4 +43,15 @@ pub(crate) trait Solver {
         of: &Term,
         cap: usize,
     ) -> anyhow::Result<Vec<u64>>;
+
+    /// The minimum and maximum feasible values of `of` under `cs`, or
+    /// `None` if UNSAT. Two optimization solves — O(1) in the size of
+    /// the feasible set, unlike `all_values`, which is one solver call
+    /// per value. Used to bound var-length forking on cyclic states.
+    fn min_max(
+        &mut self,
+        packet_bits: usize,
+        cs: &[Constraint],
+        of: &Term,
+    ) -> anyhow::Result<Option<(u64, u64)>>;
 }

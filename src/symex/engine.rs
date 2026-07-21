@@ -269,26 +269,29 @@ fn walk_extracts(
         }
         Some(pb::field_width::Width::ByteLen(expr)) => {
             let len_term = term_of_expr(expr, &frame)?;
-            let values = ctx.solver.all_values(
-                frame.cursor.max(1),
-                &frame.constraints,
-                &len_term,
-                LENGTH_VALUES_CAP,
-            )?;
             // On a cyclic state, forking every feasible length compounds
             // multiplicatively per loop iteration and never terminates.
-            // Enumerate only the min and max witnesses (dedup if equal):
-            // one representative per control-flow path, preserving the
-            // boundary coverage of the length arithmetic. Acyclic states
-            // keep the exhaustive all-SAT enumeration unchanged.
-            let values = if ctx.cyclic_states.contains(state.name.as_str()) {
-                match (values.iter().min().copied(), values.iter().max().copied()) {
-                    (Some(mn), Some(mx)) if mn == mx => vec![mn],
-                    (Some(mn), Some(mx)) => vec![mn, mx],
-                    _ => values,
+            // Fork only the min and max witnesses (dedup if equal): one
+            // representative per control-flow path, preserving the
+            // boundary coverage of the length arithmetic. Computed via
+            // two z3 optimize solves instead of a solver call per value.
+            // Acyclic states keep the exhaustive all-SAT enumeration.
+            let values: Vec<u64> = if ctx.cyclic_states.contains(state.name.as_str()) {
+                match ctx
+                    .solver
+                    .min_max(frame.cursor.max(1), &frame.constraints, &len_term)?
+                {
+                    None => Vec::new(),
+                    Some((mn, mx)) if mn == mx => vec![mn],
+                    Some((mn, mx)) => vec![mn, mx],
                 }
             } else {
-                values
+                ctx.solver.all_values(
+                    frame.cursor.max(1),
+                    &frame.constraints,
+                    &len_term,
+                    LENGTH_VALUES_CAP,
+                )?
             };
             for v in values {
                 let mut child = frame.clone();

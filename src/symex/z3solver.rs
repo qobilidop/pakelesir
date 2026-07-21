@@ -143,6 +143,54 @@ impl Solver for Z3Solver {
         values.sort_unstable();
         Ok(values)
     }
+
+    fn min_max(
+        &mut self,
+        packet_bits: usize,
+        cs: &[Constraint],
+        of: &Term,
+    ) -> anyhow::Result<Option<(u64, u64)>> {
+        // Solve the objective in the given direction under `cs`.
+        // Lengths are small positive values (< 2^63), so unsigned vs.
+        // signed BV optimization coincide.
+        fn solve(
+            s: &Z3Solver,
+            packet_bits: usize,
+            cs: &[Constraint],
+            of: &Term,
+            maximize: bool,
+        ) -> anyhow::Result<Option<u64>> {
+            let packet = s.packet(packet_bits);
+            let opt = z3::Optimize::new(&s.ctx);
+            for c in cs {
+                opt.assert(&s.constraint(&packet, c));
+            }
+            let term = s.term(&packet, of);
+            if maximize {
+                opt.maximize(&term);
+            } else {
+                opt.minimize(&term);
+            }
+            match opt.check(&[]) {
+                z3::SatResult::Sat => {
+                    let model = opt.get_model().expect("model after sat");
+                    let v = model
+                        .eval(&term, true)
+                        .and_then(|b| b.as_u64())
+                        .ok_or_else(|| anyhow::anyhow!("value eval failed"))?;
+                    Ok(Some(v))
+                }
+                _ => Ok(None),
+            }
+        }
+
+        let Some(min) = solve(self, packet_bits, cs, of, false)? else {
+            return Ok(None); // UNSAT
+        };
+        let max = solve(self, packet_bits, cs, of, true)?
+            .ok_or_else(|| anyhow::anyhow!("maximize UNSAT after minimize SAT"))?;
+        Ok(Some((min, max)))
+    }
 }
 
 #[cfg(test)]
@@ -201,6 +249,31 @@ mod tests {
         let vals = s.all_values(8, &[], &ext(0, 4), 32).unwrap();
         assert_eq!(vals, (0..16).collect::<Vec<u64>>());
         assert!(s.all_values(8, &[], &ext(0, 8), 16).is_err());
+    }
+
+    #[test]
+    fn min_max_bounds_and_unsat() {
+        let mut s = Z3Solver::new();
+        // Nibble constrained to [3, 9] -> min 3, max 9.
+        let mm = s
+            .min_max(8, &[Constraint::InRange(ext(0, 4), 3, 9)], &ext(0, 4))
+            .unwrap();
+        assert_eq!(mm, Some((3, 9)));
+        // Unconstrained nibble -> full [0, 15].
+        let full = s.min_max(8, &[], &ext(0, 4)).unwrap();
+        assert_eq!(full, Some((0, 15)));
+        // Contradiction -> None.
+        let unsat = s
+            .min_max(
+                8,
+                &[
+                    Constraint::Eq(ext(0, 4), 1),
+                    Constraint::Not(Box::new(Constraint::Eq(ext(0, 4), 1))),
+                ],
+                &ext(0, 4),
+            )
+            .unwrap();
+        assert_eq!(unsat, None);
     }
 
     #[test]
