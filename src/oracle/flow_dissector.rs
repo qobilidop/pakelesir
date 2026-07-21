@@ -84,6 +84,20 @@ pub fn project(ir: &pb::Ir, packet: &[u8]) -> anyhow::Result<Option<FlowKeys>> {
                 _ => None,
             })
     };
+    // A stacked ext-header instance (`ext_opt`) is extracted once per option;
+    // `hdr`/`u` use `.find()` = FIRST match, but the chain's terminal
+    // next_header lives in the LAST link. `last`/`last_u` reverse-find it.
+    let last = |inst: &str| res.headers.iter().rev().find(|h| h.instance == inst);
+    let last_u = |inst: &str, f: &str| -> Option<u64> {
+        last(inst)?
+            .fields
+            .iter()
+            .find(|x| x.name == f)
+            .and_then(|x| match &x.value {
+                crate::interp::FieldValue::Uint(v) => Some(*v),
+                _ => None,
+            })
+    };
     let mut k = FlowKeys::default();
     // Kernel PROG(VLAN) rewrites n_proto to the inner encapsulated proto;
     // vlan_q is the final tag on every VLAN path (the AD path's C-tag or
@@ -100,9 +114,25 @@ pub fn project(ir: &pb::Ir, packet: &[u8]) -> anyhow::Result<Option<FlowKeys>> {
     } else if let Some(h) = hdr("ipv6") {
         k.addr_proto = 0x86DD;
         k.nhoff = (h.start_bit / 8) as u16;
-        k.ip_proto = u("ipv6", "next_header").unwrap_or(0) as u8;
+        k.flow_label = u("ipv6", "flow_label").unwrap_or(0) as u32;
         k.ipv6_src = bytes("ipv6", "src").map(hex).unwrap_or_default();
         k.ipv6_dst = bytes("ipv6", "dst").map(hex).unwrap_or_default();
+        // ip_proto follows the ext-header chain: a Fragment's next_header wins
+        // (it is terminal under default flags), else the LAST option link's
+        // next_header, else the ipv6 header's own next_header.
+        k.ip_proto = last_u("ext_frag", "next_header")
+            .or_else(|| last_u("ext_opt", "next_header"))
+            .or_else(|| u("ipv6", "next_header"))
+            .unwrap_or(0) as u8;
+        // Fragment stop: under default flags a Fragment header is terminal.
+        // The kernel advances thoff past the 8-byte frag header but does not
+        // parse L4 ports (they stay 0).
+        if let Some(fr) = last("ext_frag") {
+            k.is_frag = true;
+            k.is_first_frag = last_u("ext_frag", "frag_off") == Some(0);
+            k.thoff = (fr.start_bit / 8) as u16 + 8;
+            return Ok(Some(k));
+        }
     } else if let Some(h) = hdr("mpls") {
         // Kernel PROG(MPLS): single-entry read, no key updates — nhoff and
         // thoff stay at the MPLS header start; addr_proto/ports stay 0.
@@ -370,6 +400,138 @@ mod project_tests {
         assert_eq!(k.dport, 443);
         assert_eq!(k.ipv4_src, "0a000001");
         assert_eq!(k.ipv4_dst, "0a000002");
+    }
+
+    // ---- rung 2: IPv6 extension-header chain ------------------------------
+    // Each accept packet's hex below is the byte-identical twin of the
+    // Task-5 corpus line (Task 5 replays these exact hexes against the real
+    // kernel). Layout: eth=14 (ethertype 0x86dd), IPv6=40 (4-byte
+    // version/tc/flow_label, 2-byte payload_length, 1-byte next_header,
+    // 1-byte hop_limit, 16-byte src, 16-byte dst), IPv6ExtOpt=8 (hdr_ext_len=0
+    // => 6-byte body), IPv6Frag=8, TCP=20, UDP=8. nhoff=14 (ipv6 at off 14).
+
+    #[test]
+    fn projects_ipv6_hopopt_tcp() {
+        // eth/IPv6(nexthdr=0 HopByHop)/HopByHop(hdr_ext_len=0, nexthdr=6)/TCP
+        // ipv6: 60000000 | plen=001c(28=8+20) | nh=00 | hlim=40 | src | dst
+        // hopopt: nh=06 hel=00 body=000000000000  (8 bytes)
+        let ir = crate::examples::linux_flow_dissector();
+        let pkt = hexpkt(
+            "aabbccddeeff11223344556686dd\
+             60000000001c0040\
+             20010db8000000000000000000000001\
+             20010db8000000000000000000000002\
+             0600000000000000\
+             303901bb00000001000000005018ffff00000000",
+        );
+        let k = project(&ir, &pkt).unwrap().unwrap();
+        assert_eq!(k.n_proto, 0x86dd);
+        assert_eq!(k.addr_proto, 0x86dd);
+        assert_eq!(k.nhoff, 14);
+        assert_eq!(k.ip_proto, 6); // terminal L4 proto = last link's next_header
+        assert_eq!(k.thoff, 62); // 14 + 40 (ipv6) + 8 (one option) = TCP start
+        assert!(!k.is_frag);
+        assert_eq!(k.sport, 12345);
+        assert_eq!(k.dport, 443);
+        assert_eq!(k.ipv6_src, "20010db8000000000000000000000001");
+        assert_eq!(k.ipv6_dst, "20010db8000000000000000000000002");
+    }
+
+    #[test]
+    fn projects_ipv6_frag_first() {
+        // eth/IPv6(nexthdr=44 Fragment)/Fragment(frag_off=0, nexthdr=6) — stops
+        // ipv6: 60000000 | plen=0008 | nh=2c | hlim=40 | src | dst
+        // frag: nh=06 res=00 [frag_off=0/res2=0/m=0 => 0000] id=00000001
+        let ir = crate::examples::linux_flow_dissector();
+        let pkt = hexpkt(
+            "aabbccddeeff11223344556686dd\
+             6000000000082c40\
+             20010db8000000000000000000000001\
+             20010db8000000000000000000000002\
+             0600000000000001",
+        );
+        let k = project(&ir, &pkt).unwrap().unwrap();
+        assert_eq!(k.n_proto, 0x86dd);
+        assert_eq!(k.addr_proto, 0x86dd);
+        assert_eq!(k.nhoff, 14);
+        assert!(k.is_frag);
+        assert!(k.is_first_frag);
+        assert_eq!(k.ip_proto, 6); // fragment header's next_header
+        assert_eq!(k.thoff, 62); // 14 + 40 + 8 (frag header), ports unparsed
+        assert_eq!(k.sport, 0);
+        assert_eq!(k.dport, 0);
+    }
+
+    #[test]
+    fn projects_ipv6_frag_later() {
+        // eth/IPv6(nexthdr=44)/Fragment(frag_off=1, m_flag=1) — non-first frag.
+        // frag 2-byte offset field = (frag_off<<3)|(res2<<1)|m = (1<<3)|1 = 0x0009
+        let ir = crate::examples::linux_flow_dissector();
+        let pkt = hexpkt(
+            "aabbccddeeff11223344556686dd\
+             6000000000082c40\
+             20010db8000000000000000000000001\
+             20010db8000000000000000000000002\
+             0600000900000001",
+        );
+        let k = project(&ir, &pkt).unwrap().unwrap();
+        assert!(k.is_frag);
+        assert!(!k.is_first_frag); // frag_off != 0
+        assert_eq!(k.ip_proto, 6);
+        assert_eq!(k.thoff, 62);
+        assert_eq!(k.sport, 0);
+        assert_eq!(k.dport, 0);
+    }
+
+    #[test]
+    fn projects_ipv6_two_opts_udp() {
+        // eth/IPv6(nexthdr=0x3c DestOpts)/DestOpts(nexthdr=0x00 HopByHop)/
+        //   HopByHop(nexthdr=17 UDP)/UDP — proves ip_proto reads the LAST link.
+        // ipv6: 60000000 | plen=0018(24=8+8+8) | nh=3c | hlim=40 | src | dst
+        // destopts: nh=00 hel=00 body=6*00      (8 bytes)
+        // hopopt:   nh=11 hel=00 body=6*00      (8 bytes)  (0x11 = 17)
+        // udp:      sport=3039 dport=01bb len=0008 csum=0000
+        let ir = crate::examples::linux_flow_dissector();
+        let pkt = hexpkt(
+            "aabbccddeeff11223344556686dd\
+             6000000000183c40\
+             20010db8000000000000000000000001\
+             20010db8000000000000000000000002\
+             0000000000000000\
+             1100000000000000\
+             303901bb00080000",
+        );
+        let k = project(&ir, &pkt).unwrap().unwrap();
+        assert_eq!(k.n_proto, 0x86dd);
+        assert_eq!(k.addr_proto, 0x86dd);
+        assert_eq!(k.nhoff, 14);
+        assert_eq!(k.ip_proto, 17); // LAST link (HopByHop.next_header), NOT 0
+        assert_eq!(k.thoff, 70); // 14 + 40 + 8 + 8 = UDP start
+        assert!(!k.is_frag);
+        assert_eq!(k.sport, 12345);
+        assert_eq!(k.dport, 443);
+    }
+
+    #[test]
+    fn projects_ipv6_flow_label() {
+        // eth/IPv6(flow_label=0x12345, nexthdr=6)/TCP — flow_label recorded,
+        // no early stop under default flags.
+        // ver/tc/fl word: version=6, tc=0, flow_label=0x12345 => 0x60012345
+        let ir = crate::examples::linux_flow_dissector();
+        let pkt = hexpkt(
+            "aabbccddeeff11223344556686dd\
+             6001234500140640\
+             20010db8000000000000000000000001\
+             20010db8000000000000000000000002\
+             303901bb00000001000000005018ffff00000000",
+        );
+        let k = project(&ir, &pkt).unwrap().unwrap();
+        assert_eq!(k.flow_label, 0x12345); // 74565
+        assert_eq!(k.ip_proto, 6);
+        assert_eq!(k.thoff, 54); // 14 + 40, no options
+        assert!(!k.is_frag);
+        assert_eq!(k.sport, 12345);
+        assert_eq!(k.dport, 443);
     }
 }
 
