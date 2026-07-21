@@ -18,6 +18,27 @@ pub struct CArtifacts {
     pub source: String,
 }
 
+/// One header per distinct instance name, keeping the LAST extraction
+/// (matching datapath backends, which overwrite a single struct per
+/// instance). Preserves first-seen instance order. Rung 2: stacked
+/// instances (loop back-edges) appear multiple times in the interpreter's
+/// header list; only the terminal link is stored by the backends and is
+/// the conformance surface.
+pub(crate) fn last_headers_by_instance(
+    headers: &[crate::interp::ParsedHeader],
+) -> Vec<&crate::interp::ParsedHeader> {
+    let mut order: Vec<&str> = Vec::new();
+    let mut last: std::collections::HashMap<&str, &crate::interp::ParsedHeader> =
+        std::collections::HashMap::new();
+    for h in headers {
+        if !order.iter().any(|i| *i == h.instance.as_str()) {
+            order.push(h.instance.as_str());
+        }
+        last.insert(h.instance.as_str(), h);
+    }
+    order.into_iter().map(|i| last[i]).collect()
+}
+
 /// Reasons get stable codes: the three built-ins, then authored
 /// reasons sorted. Returns (reason, code) pairs.
 fn reason_table(parser: &pb::Parser) -> Vec<(String, u32)> {
@@ -630,6 +651,36 @@ mod tests {
     use super::*;
     use crate::examples::{eth_ipvx_l4, linux_flow_dissector};
 
+    #[test]
+    fn last_headers_by_instance_keeps_last_of_repeats() {
+        use crate::interp::{FieldValue, ParsedField, ParsedHeader};
+        let mk = |inst: &str, nh: u64, start: usize| ParsedHeader {
+            instance: inst.into(),
+            header_type: "ext_opt".into(),
+            start_bit: start,
+            fields: vec![ParsedField {
+                name: "next_header".into(),
+                bit_offset: 0,
+                bit_len: 8,
+                value: FieldValue::Uint(nh),
+            }],
+        };
+        let hs = vec![
+            mk("ipv6", 60, 112),
+            mk("ext_opt", 0, 432),  // DestOpts (first link)
+            mk("ext_opt", 17, 496), // HopByHop (last link)
+            mk("udp", 0, 560),
+        ];
+        let last = last_headers_by_instance(&hs);
+        let insts: Vec<&str> = last.iter().map(|h| h.instance.as_str()).collect();
+        assert_eq!(insts, ["ipv6", "ext_opt", "udp"]); // one ext_opt, first-seen order
+        let ext = last.iter().find(|h| h.instance == "ext_opt").unwrap();
+        match &ext.fields[0].value {
+            FieldValue::Uint(v) => assert_eq!(*v, 17), // the LAST link's next_header
+            _ => panic!(),
+        }
+    }
+
     fn cc_compiles(files: &[(&str, &str)], cmd: &[&str]) -> std::process::Output {
         let dir = std::env::temp_dir().join(format!("pakeles_c_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
@@ -746,7 +797,7 @@ mod tests {
                     vector.id, reference.consumed_bits
                 ));
             }
-            for h in &reference.headers {
+            for h in last_headers_by_instance(&reference.headers) {
                 for f in &h.fields {
                     let key = format!("{}.{}", h.instance, f.name);
                     let got = c_fields.get(key.as_str()).copied();

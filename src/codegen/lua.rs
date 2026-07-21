@@ -767,7 +767,7 @@ mod tests {
                 _ => {
                     let (bits, _) = crate::testvec::Bits::from_pb(vector.packet.as_ref().unwrap());
                     let res = crate::interp::run_bits(ir, &bits).unwrap();
-                    headers_to_expected(&res.headers)
+                    headers_to_expected(&crate::codegen::c::last_headers_by_instance(&res.headers))
                 }
             };
             for (inst, fields) in &expected_headers {
@@ -835,7 +835,7 @@ mod tests {
 
     /// interp headers -> the (inst, fields) shape used above.
     fn headers_to_expected(
-        headers: &[crate::interp::ParsedHeader],
+        headers: &[&crate::interp::ParsedHeader],
     ) -> Vec<(String, ExpectedFields)> {
         headers
             .iter()
