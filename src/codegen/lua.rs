@@ -770,6 +770,33 @@ mod tests {
                     headers_to_expected(&crate::codegen::c::last_headers_by_instance(&res.headers))
                 }
             };
+            // A looped instance (e.g. `ext_opt`) appears more than once in
+            // an accept vector's schema-baked headers, but tshark's
+            // `-T json` collapses the repeated subtrees under duplicate
+            // keys to the last occurrence. Compare against the last
+            // occurrence per instance, keeping first-seen order. (The
+            // reject branch is already last-per-instance via
+            // `last_headers_by_instance`, so this is a no-op there.)
+            let expected_headers = {
+                let mut order: Vec<String> = Vec::new();
+                let mut latest: std::collections::HashMap<
+                    String,
+                    Vec<(String, Option<crate::testvec::pb::expected_field::Value>)>,
+                > = std::collections::HashMap::new();
+                for (inst, fields) in expected_headers {
+                    if !latest.contains_key(&inst) {
+                        order.push(inst.clone());
+                    }
+                    latest.insert(inst, fields);
+                }
+                order
+                    .into_iter()
+                    .map(|inst| {
+                        let fields = latest.remove(&inst).unwrap();
+                        (inst, fields)
+                    })
+                    .collect::<Vec<_>>()
+            };
             for (inst, fields) in &expected_headers {
                 for (fname, fval) in fields {
                     let key = format!("{proto}.{inst}.{fname}");
