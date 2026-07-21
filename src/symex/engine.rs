@@ -18,6 +18,15 @@ const SANITY_BITS: usize = 8 * 1024 * 1024;
 /// never a silent truncation.
 const LENGTH_VALUES_CAP: usize = 1024;
 
+/// Max times a cyclic state may be entered per path during testgen. A
+/// self-loop (e.g. IPv6 option chains) otherwise forks exponentially in
+/// loop depth (~arms^depth), so we cap unrolling to a small constant:
+/// enough to exercise 0..N option headers, the self-loop-twice case, and
+/// the varbit boundaries, without the explosion. This is a coverage
+/// bound, NOT parser behavior — over-cap unrollings emit no vector (not a
+/// reject). Coexists with the global `max_depth` reject.
+const TESTGEN_LOOP_UNROLL: u32 = 3;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum PathKind {
     Accept,
@@ -68,6 +77,8 @@ struct Frame {
     constraints: Vec<Constraint>,
     segments: Vec<String>,
     depth: u32,
+    /// Per-path entry count for each cyclic state (loop-unroll cap).
+    loop_counts: HashMap<String, u32>,
 }
 
 pub(crate) fn enumerate(ir: &pb::Ir, solver: &mut dyn Solver) -> anyhow::Result<Enumeration> {
@@ -214,6 +225,19 @@ fn walk_state(ctx: &mut Ctx, state_name: &str, mut frame: Frame) -> anyhow::Resu
             bl,
         );
         return Ok(());
+    }
+    // Testgen loop-unroll cap: a cyclic state may be entered at most
+    // TESTGEN_LOOP_UNROLL times per path. Over-cap unrollings are pruned
+    // with NO vector emitted (a coverage bound, not parser behavior — the
+    // real parser would keep going, so we do not emit a reject). Checked
+    // after the `max_depth` reject so that global bound still applies;
+    // acyclic states are unaffected.
+    if ctx.cyclic_states.contains(state_name) {
+        let count = frame.loop_counts.entry(state_name.to_string()).or_insert(0);
+        if *count >= TESTGEN_LOOP_UNROLL {
+            return Ok(());
+        }
+        *count += 1;
     }
     ctx.log.reached_states.insert(state_name.to_string());
     let state = *ctx
@@ -602,5 +626,49 @@ mod tests {
             .paths
             .iter()
             .any(|p| p.id.contains("h.body=15B/default/opt")));
+    }
+
+    #[test]
+    fn cyclic_loop_unroll_capped_for_testgen() {
+        // Same self-loop as above but with a LARGE max_depth: the loop
+        // forks ~exponentially in loop depth (two branches recurse), so
+        // without the unroll cap this explodes / hangs. The cap bounds
+        // per-path entries of the cyclic `opt` state to
+        // TESTGEN_LOOP_UNROLL, keeping enumeration small and fast — the
+        // test terminating quickly IS the perf proof.
+        let ir = ParserBuilder::new("optloop", 12)
+            .header(
+                HeaderTypeBuilder::new("h")
+                    .bits("len", 4)
+                    .var_bytes("body", f("h", "len")),
+            )
+            .state(StateBuilder::new("opt").extract("h").select(
+                vec![f("h", "len")],
+                vec![arm(vec![v(0)], accept())],
+                to("opt"),
+            ))
+            .start("opt")
+            .build()
+            .unwrap();
+        let e = enumerate_ir(&ir);
+        // Bounded, small path count despite max_depth=12.
+        assert!(
+            e.paths.len() < 64,
+            "expected a bounded path count, got {}",
+            e.paths.len()
+        );
+        assert!(!e.paths.is_empty());
+        // No single path enters the cyclic state more than the cap.
+        let max_entries = e
+            .paths
+            .iter()
+            .map(|p| p.id.split('/').filter(|seg| *seg == "opt").count())
+            .max()
+            .unwrap();
+        assert!(
+            max_entries <= TESTGEN_LOOP_UNROLL as usize,
+            "cyclic state entered {max_entries} times, cap is {TESTGEN_LOOP_UNROLL}"
+        );
+        assert_eq!(max_entries, TESTGEN_LOOP_UNROLL as usize);
     }
 }
