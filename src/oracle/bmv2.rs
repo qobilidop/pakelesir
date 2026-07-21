@@ -27,13 +27,13 @@ use std::process::{Command, Stdio};
 
 pub struct Verdict {
     pub delivered: bool,
-    pub bitmap: u8,
+    pub bitmap: u16,
     pub err: u8,
 }
 
 /// Expected observation for one vector: exact bitmap + acceptable errs.
 pub struct Expectation {
-    pub bitmap: u8,
+    pub bitmap: u16,
     pub errs: Vec<u8>,
 }
 
@@ -69,8 +69,10 @@ pub fn compile(p4_src: &str, workdir: &Path) -> Result<PathBuf> {
 /// keeps the differential suite deterministic.
 static SWITCH_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-/// Run one packet through simple_switch; port 0 in, port 1 out.
-pub fn run_one(json: &Path, packet: &[u8], workdir: &Path) -> Result<Verdict> {
+/// Run one packet through simple_switch; port 0 in, port 1 out. The
+/// verdict frame is `bm_bytes` of big-endian bitmap followed by 1 byte of
+/// parser-error code (`bm_bytes` is 1 for ≤8 instances, 2 beyond).
+pub fn run_one(json: &Path, packet: &[u8], workdir: &Path, bm_bytes: usize) -> Result<Verdict> {
     let _guard = SWITCH_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let dir = workdir.join("run");
     let _ = std::fs::remove_dir_all(&dir);
@@ -96,14 +98,19 @@ pub fn run_one(json: &Path, packet: &[u8], workdir: &Path) -> Result<Verdict> {
     let verdict = loop {
         if let Ok(pkts) = crate::pcapio::read_packets(&out_pcap) {
             if let Some(p) = pkts.first() {
-                if p.len() < 2 {
+                if p.len() < bm_bytes + 1 {
                     let _ = child.kill();
                     bail!("verdict frame too short: {} bytes", p.len());
                 }
+                // Bitmap is emitted big-endian across `bm_bytes` bytes.
+                let mut bitmap: u16 = 0;
+                for &b in &p[..bm_bytes] {
+                    bitmap = (bitmap << 8) | b as u16;
+                }
                 break Verdict {
                     delivered: true,
-                    bitmap: p[0],
-                    err: p[1],
+                    bitmap,
+                    err: p[bm_bytes],
                 };
             }
         }
@@ -149,14 +156,14 @@ pub fn expected(ir: &pb::Ir, bits: &crate::testvec::Bits) -> Result<Expectation>
     let parser = ir.parser.as_ref().context("IR has no parser")?;
     let res = crate::interp::run_bits(ir, bits)?;
     let order = crate::codegen::p4::instance_order(parser);
-    let bit_of = |inst: &str| -> u8 {
+    let bit_of = |inst: &str| -> u16 {
         order
             .iter()
             .position(|(i, _)| i == inst)
-            .map(|p| 1u8 << p)
+            .map(|p| 1u16 << p)
             .unwrap_or(0)
     };
-    let mut bitmap: u8 = 0;
+    let mut bitmap: u16 = 0;
     for h in &res.headers {
         bitmap |= bit_of(&h.instance);
     }
@@ -201,7 +208,10 @@ pub struct DiffReport {
 
 pub fn diff_suite(ir: &pb::Ir, suite: &tvpb::TestSuite) -> Result<DiffReport> {
     let p4 = crate::codegen::p4::generate_p4(ir)?;
-    let name = &ir.parser.as_ref().context("IR has no parser")?.name;
+    let parser = ir.parser.as_ref().context("IR has no parser")?;
+    let name = &parser.name;
+    let bm_bytes =
+        crate::codegen::p4::bitmap_bytes(crate::codegen::p4::instance_order(parser).len());
     let workdir = std::env::temp_dir().join(format!("pakeles_bmv2_{name}_{}", std::process::id()));
     let json = compile(&p4, &workdir)?;
     let (packets, indices) = crate::testvec::suite_to_packets(suite);
@@ -215,7 +225,7 @@ pub fn diff_suite(ir: &pb::Ir, suite: &tvpb::TestSuite) -> Result<DiffReport> {
         let bs = vector.packet.as_ref().context("vector has no packet")?;
         let (bits, _) = crate::testvec::Bits::from_pb(bs);
         let want = expected(ir, &bits)?;
-        let got = run_one(&json, packet, &workdir)?;
+        let got = run_one(&json, packet, &workdir, bm_bytes)?;
         report.compared += 1;
         if !got.delivered {
             report.mismatches.push(format!(
@@ -261,7 +271,10 @@ mod tests {
             .find(|(_, &vi)| suite.vectors[vi].category() == tvpb::Category::Accept)
             .map(|(p, &vi)| (p.clone(), vi))
             .expect("no byte-aligned accept vector");
-        let v = run_one(&json, &pkt, &dir).unwrap();
+        let bm_bytes = crate::codegen::p4::bitmap_bytes(
+            crate::codegen::p4::instance_order(ir.parser.as_ref().unwrap()).len(),
+        );
+        let v = run_one(&json, &pkt, &dir, bm_bytes).unwrap();
         assert!(v.delivered, "accept vector {vi} produced no output");
         assert_eq!(v.err, crate::codegen::p4::ERR_NO_ERROR);
     }

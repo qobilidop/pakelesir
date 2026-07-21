@@ -3,9 +3,10 @@
 //! One P4 header per contiguous run of fixed fields; each var (`byte_len`)
 //! field becomes a companion `varbit` header extracted with a computed
 //! length (P4 requires a varbit to terminate its header). The program's
-//! ingress encodes a 2-byte verdict — header-validity bitmap + parser
-//! error code — and the deparser emits only that verdict, so the BMv2
-//! differential observes exactly (bitmap, err) per packet.
+//! ingress encodes the verdict — a header-validity bitmap (`bit<8>`, or
+//! `bit<16>` for >8 instances) followed by a 1-byte parser error code —
+//! and the deparser emits only that verdict (bitmap big-endian, then err),
+//! so the BMv2 differential observes exactly (bitmap, err) per packet.
 //!
 //! Cyclic state graphs are realized with header stacks: an instance whose
 //! extracting state lies on a cycle becomes parallel `[max_depth]` stacks
@@ -21,6 +22,24 @@ use std::fmt::Write;
 /// bit-castable in P4, so the ingress maps it through an if-chain).
 pub const ERR_NO_ERROR: u8 = 0;
 pub const ERR_PACKET_TOO_SHORT: u8 = 1;
+
+/// Width (in bits) of the verdict validity bitmap for `n` header instances.
+/// A `bit<8>` covers the common case (≤8 instances, e.g. `eth_ipvx_l4`);
+/// beyond that the bitmap widens to `bit<16>`. The deparser emits the
+/// bitmap big-endian, so `bitmap_bytes` bytes precede the 1-byte err.
+pub fn bitmap_bits(n: usize) -> u32 {
+    if n <= 8 {
+        8
+    } else {
+        16
+    }
+}
+
+/// Bytes the verdict bitmap occupies on the wire (big-endian), for a
+/// parser with the given instance count.
+pub fn bitmap_bytes(n: usize) -> usize {
+    (bitmap_bits(n) / 8) as usize
+}
 
 pub(crate) enum Seg<'a> {
     Fixed(Vec<&'a pb::Field>),
@@ -294,12 +313,13 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
     let parser = ir.parser.as_ref().context("IR has no parser")?;
     let insts = instance_order(parser);
     let stacked = stacked_instances(parser);
-    if insts.len() > 8 {
+    if insts.len() > 16 {
         bail!(
-            "verdict bitmap supports at most 8 header instances, got {}",
+            "verdict bitmap supports at most 16 header instances, got {}",
             insts.len()
         );
     }
+    let bm_bits = bitmap_bits(insts.len());
     if insts.iter().any(|(i, _)| i == "verdict") {
         bail!("header instance name `verdict` is reserved by the P4 backend");
     }
@@ -354,7 +374,7 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
     }
 
     writeln!(w, "header verdict_t {{")?;
-    writeln!(w, "    bit<8> bitmap;")?;
+    writeln!(w, "    bit<{bm_bits}> bitmap;")?;
     writeln!(w, "    bit<8> err;")?;
     writeln!(w, "}}")?;
     writeln!(w)?;
@@ -485,7 +505,7 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
     writeln!(w, "                  inout standard_metadata_t smeta) {{")?;
     writeln!(w, "    apply {{")?;
     writeln!(w, "        hdr.verdict.setValid();")?;
-    writeln!(w, "        bit<8> bm = 8w0;")?;
+    writeln!(w, "        bit<{bm_bits}> bm = {bm_bits}w0;")?;
     for (idx, (inst, _)) in insts.iter().enumerate() {
         let ht = header_type_of(parser, inst)?;
         let segs = segments(ht);
@@ -496,7 +516,11 @@ pub fn generate_p4(ir: &pb::Ir) -> Result<String> {
         } else {
             format!("hdr.{member}.isValid()")
         };
-        writeln!(w, "        if ({valid}) {{ bm = bm | 8w{}; }}", 1u32 << idx)?;
+        writeln!(
+            w,
+            "        if ({valid}) {{ bm = bm | {bm_bits}w{}; }}",
+            1u32 << idx
+        )?;
     }
     writeln!(w, "        hdr.verdict.bitmap = bm;")?;
     writeln!(w, "        bit<8> err = 8w255;")?;
@@ -700,6 +724,101 @@ mod tests {
             !stderr.contains("warning"),
             "p4test warnings:\n{stderr}\n---\n{p4}"
         );
+    }
+
+    /// A synthetic linear-chain IR with `n` distinct header instances, all
+    /// of the same trivial single-`bit<8>`-field header type. Exists to
+    /// exercise the verdict-bitmap width threshold without needing a
+    /// real-world example with that many instances.
+    fn synth_ir(n: usize) -> pb::Ir {
+        let ht = pb::HeaderType {
+            name: "h".into(),
+            fields: vec![pb::Field {
+                name: "v".into(),
+                width: Some(pb::FieldWidth {
+                    width: Some(pb::field_width::Width::Bits(8)),
+                }),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let states = (0..n)
+            .map(|i| {
+                let target = if i + 1 < n {
+                    pb::Target {
+                        kind: Some(pb::target::Kind::State(format!("s{}", i + 1))),
+                    }
+                } else {
+                    pb::Target {
+                        kind: Some(pb::target::Kind::Accept(pb::Accept {})),
+                    }
+                };
+                pb::State {
+                    name: format!("s{i}"),
+                    extracts: vec![pb::Extract {
+                        header_type: "h".into(),
+                        instance: format!("h{i}"),
+                    }],
+                    transition: Some(pb::Transition {
+                        kind: Some(pb::transition::Kind::Direct(target)),
+                    }),
+                    ..Default::default()
+                }
+            })
+            .collect();
+        pb::Ir {
+            ir_version: "0.1.0".into(),
+            parser: Some(pb::Parser {
+                name: "synth".into(),
+                header_types: vec![ht],
+                states,
+                start_state: "s0".into(),
+                max_depth: n as u32,
+                ..Default::default()
+            }),
+        }
+    }
+
+    #[test]
+    fn bitmap_bits_thresholds() {
+        assert_eq!(bitmap_bits(1), 8);
+        assert_eq!(bitmap_bits(8), 8);
+        assert_eq!(bitmap_bits(9), 16);
+        assert_eq!(bitmap_bits(16), 16);
+        assert_eq!(bitmap_bytes(8), 1);
+        assert_eq!(bitmap_bytes(9), 2);
+    }
+
+    #[test]
+    fn verdict_bitmap_widens_past_8_instances() {
+        // 9-10 instances is exactly the rung-2 shape this fix unblocks.
+        for n in [9, 10] {
+            let p4 = generate_p4(&synth_ir(n)).unwrap_or_else(|e| {
+                panic!("generate_p4 unexpectedly bailed at {n} instances: {e}")
+            });
+            assert!(p4.contains("bit<16> bitmap;"), "n={n}\n---\n{p4}");
+            assert!(p4.contains("bit<16> bm = 16w0;"), "n={n}\n---\n{p4}");
+        }
+    }
+
+    #[test]
+    fn verdict_bitmap_stays_8_bit_at_or_below_8_instances() {
+        let p4 = generate_p4(&synth_ir(8)).unwrap();
+        assert!(p4.contains("bit<8> bitmap;"), "{p4}");
+        assert!(p4.contains("bit<8> bm = 8w0;"), "{p4}");
+        assert!(!p4.contains("bit<16> bitmap"), "{p4}");
+
+        // eth_ipvx_l4 has 5 instances and exercises the same path
+        // end-to-end; `committed_p4_artifact_current` pins its exact
+        // byte-identical output, guarding the "unchanged for <=8" claim.
+        let p4_example = generate_p4(&crate::examples::eth_ipvx_l4()).unwrap();
+        assert!(p4_example.contains("bit<8> bitmap;"), "{p4_example}");
+    }
+
+    #[test]
+    fn more_than_16_instances_still_bails() {
+        let err = generate_p4(&synth_ir(17)).unwrap_err();
+        assert!(err.to_string().contains("at most 16"), "{err}");
     }
 
     #[test]
