@@ -79,10 +79,16 @@ rung boundaries, not bugs:
   after setting `is_frag`/`is_first_frag` (`PARSE_1ST_FRAG` off). Flag-driven
   behavior is out of scope — the parser takes no side channel.
 - **Option-chain depth:** we bound the chain by `max_depth` (~5 option
-  headers behind an Ethernet/IPv6 prefix, fewer behind QinQ). The kernel
-  bounds it by the tail-call limit (~30). Chains of 6–~30 option headers are
-  a known divergence: the kernel accepts, we reject. Not in the agreement
-  corpus by construction.
+  headers behind an Ethernet/IPv6 prefix, up to ~7 with no VLAN prefix,
+  fewer behind QinQ). The kernel bounds it by the tail-call limit (~30).
+  Chains of 6–~30 option headers are a known divergence: the kernel
+  accepts, we reject. Not in the agreement corpus by construction.
+  Note this bound is per-backend: the interpreter, C, BPF, and Lua count
+  *every* state entered against `max_depth`, whereas the P4 backend's only
+  loop bound is its option-header stack size (which counts *only* option
+  pushes). So for a deep plain-IPv6 option chain the P4 datapath accepts a
+  few more options than the others (and there agrees with the kernel) —
+  a seam that lives entirely in this untested divergence zone.
 
 Adding any of these as a corpus vector would make the gate legitimately
 red until a future rung models them.

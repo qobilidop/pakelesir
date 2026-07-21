@@ -668,11 +668,18 @@ mod tests {
         assert!(lua.contains("function states.parse_ipv4"));
         assert!(lua.contains("ProtoField.ether"));
         assert!(lua.contains("[6] = \"TCP\""));
-        let committed = std::fs::read_to_string("examples/eth_ipvx_l4/gen/dissector.lua").unwrap();
-        assert_eq!(
-            lua, committed,
-            "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"
-        );
+        for (name, ir) in [
+            ("eth_ipvx_l4", eth_ipvx_l4()),
+            ("linux_flow_dissector", linux_flow_dissector()),
+        ] {
+            let lua = generate_lua(&ir).unwrap();
+            let committed =
+                std::fs::read_to_string(format!("examples/{name}/gen/dissector.lua")).unwrap();
+            assert_eq!(
+                lua, committed,
+                "examples/{name} dissector.lua drifted; regenerate: ./dev.sh scripts/gen-examples.sh"
+            );
+        }
     }
 
     /// The full loop: symbolic vectors -> pcap -> tshark running our

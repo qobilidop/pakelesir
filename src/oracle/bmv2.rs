@@ -242,14 +242,14 @@ pub fn diff_suite(ir: &pb::Ir, suite: &tvpb::TestSuite) -> Result<DiffReport> {
         report.compared += 1;
         if !got.delivered {
             report.mismatches.push(format!(
-                "vector {vi} ({}): no packet delivered (expected bm={:08b})",
+                "vector {vi} ({}): no packet delivered (expected bm={:016b})",
                 vector.id, want.bitmap
             ));
             continue;
         }
         if got.bitmap != want.bitmap || !want.errs.contains(&got.err) {
             report.mismatches.push(format!(
-                "vector {vi} ({}): expected bm={:08b} err in {:?}, got bm={:08b} err={}",
+                "vector {vi} ({}): expected bm={:016b} err in {:?}, got bm={:016b} err={}",
                 vector.id, want.bitmap, want.errs, got.bitmap, got.err
             ));
         }

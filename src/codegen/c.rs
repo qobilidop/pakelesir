@@ -943,18 +943,24 @@ mod tests {
 
     #[test]
     fn committed_c_artifacts_current() {
-        let arts = generate_c(&eth_ipvx_l4()).unwrap();
-        let bpf = generate_bpf(&eth_ipvx_l4()).unwrap();
-        for (path, fresh) in [
-            ("examples/eth_ipvx_l4/gen/parser.h", &arts.header),
-            ("examples/eth_ipvx_l4/gen/parser.c", &arts.source),
-            ("examples/eth_ipvx_l4/gen/parser.bpf.c", &bpf),
+        for (name, ir) in [
+            ("eth_ipvx_l4", eth_ipvx_l4()),
+            ("linux_flow_dissector", linux_flow_dissector()),
         ] {
-            let committed = std::fs::read_to_string(path).unwrap();
-            assert_eq!(
-                *fresh, committed,
-                "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"
-            );
+            let arts = generate_c(&ir).unwrap();
+            let bpf = generate_bpf(&ir).unwrap();
+            for (file, fresh) in [
+                ("parser.h", &arts.header),
+                ("parser.c", &arts.source),
+                ("parser.bpf.c", &bpf),
+            ] {
+                let committed =
+                    std::fs::read_to_string(format!("examples/{name}/gen/{file}")).unwrap();
+                assert_eq!(
+                    *fresh, committed,
+                    "examples/{name} {file} drifted; regenerate: ./dev.sh scripts/gen-examples.sh"
+                );
+            }
         }
     }
 

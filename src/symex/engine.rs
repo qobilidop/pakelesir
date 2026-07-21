@@ -555,6 +555,33 @@ mod tests {
     }
 
     #[test]
+    fn max_depth_reject_on_acyclic_chain() {
+        // A purely ACYCLIC chain longer than max_depth: no state is cyclic,
+        // so the loop-unroll cap never applies — the max_depth reject fires
+        // on its own. This decouples the global bound from
+        // TESTGEN_LOOP_UNROLL (unlike `depth_bound_emits_reject`, which
+        // couples cap == max_depth on a self-loop).
+        let ir = ParserBuilder::new("chain", 2)
+            .state(StateBuilder::new("s0").goto_(to("s1")))
+            .state(StateBuilder::new("s1").goto_(to("s2")))
+            .state(StateBuilder::new("s2").goto_(to("s3")))
+            .state(StateBuilder::new("s3").accept())
+            .start("s0")
+            .build()
+            .unwrap();
+        let e = enumerate_ir(&ir);
+        assert_eq!(e.paths.len(), 1);
+        // s0(1) -> s1(2) -> s2(3 > max_depth 2): reject at the 3rd state entered.
+        assert_eq!(e.paths[0].id, "s0/s1/s2");
+        assert_eq!(
+            e.paths[0].kind,
+            PathKind::Reject {
+                reason: "max depth exceeded".into()
+            }
+        );
+    }
+
+    #[test]
     fn length_forking() {
         // h { n: 2 bits, body: n bytes } -> 4 accepts (n=0..3),
         // 1 trunc@n, 3 trunc@body (n=1..3).

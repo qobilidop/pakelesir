@@ -698,12 +698,21 @@ mod tests {
 
     #[test]
     fn committed_p4_artifact_current() {
-        let p4 = generate_p4(&crate::examples::eth_ipvx_l4()).unwrap();
-        let committed = std::fs::read_to_string("examples/eth_ipvx_l4/gen/parser.p4").unwrap();
-        assert_eq!(
-            p4, committed,
-            "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"
-        );
+        for (name, ir) in [
+            ("eth_ipvx_l4", crate::examples::eth_ipvx_l4()),
+            (
+                "linux_flow_dissector",
+                crate::examples::linux_flow_dissector(),
+            ),
+        ] {
+            let p4 = generate_p4(&ir).unwrap();
+            let committed =
+                std::fs::read_to_string(format!("examples/{name}/gen/parser.p4")).unwrap();
+            assert_eq!(
+                p4, committed,
+                "examples/{name} parser.p4 drifted; regenerate: ./dev.sh scripts/gen-examples.sh"
+            );
+        }
     }
 
     #[test]
