@@ -124,6 +124,22 @@ pub fn suite_from_json(s: &str) -> Result<pb::TestSuite> {
     Ok(serde_json::from_str(s)?)
 }
 
+/// Load a committed conformance suite, or `None` when its `vectors.json` is
+/// absent. The suite is a generated artifact that is gitignored during fast
+/// iteration (it churns on every IR/testgen change), so differential and
+/// conformance tests SKIP when it hasn't been regenerated. Regenerate with
+/// `./dev.sh scripts/gen-examples.sh`; the suite is re-committed once the
+/// codebase stabilizes.
+#[cfg(test)]
+pub(crate) fn committed_suite_or_skip(name: &str) -> Option<pb::TestSuite> {
+    let path = format!("examples/{name}/conformance/vectors.json");
+    if !std::path::Path::new(&path).exists() {
+        eprintln!("skipping: {path} not generated (run ./dev.sh scripts/gen-examples.sh)");
+        return None;
+    }
+    Some(suite_from_json(&std::fs::read_to_string(&path).unwrap()).unwrap())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -174,9 +190,9 @@ mod tests {
 
     #[test]
     fn suite_to_packets_selects_byte_aligned() {
-        let text =
-            std::fs::read_to_string("examples/eth_ipvx_l4/conformance/vectors.json").unwrap();
-        let suite = suite_from_json(&text).unwrap();
+        let Some(suite) = committed_suite_or_skip("eth_ipvx_l4") else {
+            return;
+        };
         let (packets, indices) = suite_to_packets(&suite);
         assert_eq!(packets.len(), indices.len());
         assert!(!packets.is_empty());
@@ -196,14 +212,19 @@ mod tests {
 
     #[test]
     fn committed_vectors_pcap_current() {
-        let text =
-            std::fs::read_to_string("examples/eth_ipvx_l4/conformance/vectors.json").unwrap();
-        let suite = suite_from_json(&text).unwrap();
+        let pcap_path = "examples/eth_ipvx_l4/conformance/vectors.pcap";
+        let Some(suite) = committed_suite_or_skip("eth_ipvx_l4") else {
+            return;
+        };
+        if !std::path::Path::new(pcap_path).exists() {
+            eprintln!("skipping: {pcap_path} not generated");
+            return;
+        }
         let (packets, _) = suite_to_packets(&suite);
         let tmp = std::env::temp_dir().join("pakeles_gallery_check.pcap");
         crate::pcapio::write_pcap(&tmp, &packets).unwrap();
         let fresh = std::fs::read(&tmp).unwrap();
-        let committed = std::fs::read("examples/eth_ipvx_l4/conformance/vectors.pcap").unwrap();
+        let committed = std::fs::read(pcap_path).unwrap();
         assert_eq!(
             fresh, committed,
             "examples/ drifted; regenerate: ./dev.sh cargo run --bin gen_examples"

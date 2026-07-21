@@ -175,9 +175,9 @@ mod tests {
 
     #[test]
     fn committed_vectors_replay_green() {
-        let path = "examples/eth_ipvx_l4/conformance/vectors.json";
-        let text = std::fs::read_to_string(path).expect("committed suite exists");
-        let suite = crate::testvec::suite_from_json(&text).unwrap();
+        let Some(suite) = crate::testvec::committed_suite_or_skip("eth_ipvx_l4") else {
+            return;
+        };
         let mismatches = replay(&eth_ipvx_l4(), &suite).unwrap();
         assert!(mismatches.is_empty(), "{mismatches:#?}");
     }

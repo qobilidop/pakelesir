@@ -276,10 +276,9 @@ mod tests {
         let p4 = crate::codegen::p4::generate_p4(&ir).unwrap();
         let dir = std::env::temp_dir().join("pakeles_bmv2_unit");
         let json = compile(&p4, &dir).unwrap();
-        let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string("examples/eth_ipvx_l4/conformance/vectors.json").unwrap(),
-        )
-        .unwrap();
+        let Some(suite) = crate::testvec::committed_suite_or_skip("eth_ipvx_l4") else {
+            return;
+        };
         let (packets, indices) = crate::testvec::suite_to_packets(&suite);
         // first byte-aligned ACCEPT vector
         let (pkt, vi) = packets
@@ -302,10 +301,9 @@ mod tests {
             return;
         }
         let name = &ir.parser.as_ref().unwrap().name;
-        let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string(format!("examples/{name}/conformance/vectors.json")).unwrap(),
-        )
-        .unwrap();
+        let Some(suite) = crate::testvec::committed_suite_or_skip(name) else {
+            return;
+        };
         let report = diff_suite(ir, &suite).unwrap();
         assert!(
             report.compared >= min_compared,

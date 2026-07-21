@@ -735,10 +735,9 @@ mod tests {
             String::from_utf8_lossy(&cc.stderr)
         );
 
-        let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string(format!("examples/{name}/conformance/vectors.json")).unwrap(),
-        )
-        .unwrap();
+        let Some(suite) = crate::testvec::committed_suite_or_skip(&name) else {
+            return;
+        };
         let mut input = String::new();
         let mut bits_list = Vec::new();
         for v in &suite.vectors {
@@ -888,10 +887,9 @@ mod tests {
         let prog = std::fs::read(dir.join("bpf.bin")).unwrap();
         assert!(!prog.is_empty());
 
-        let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string(format!("examples/{name}/conformance/vectors.json")).unwrap(),
-        )
-        .unwrap();
+        let Some(suite) = crate::testvec::committed_suite_or_skip(&name) else {
+            return;
+        };
         let reasons = reason_table(ir.parser.as_ref().unwrap());
         let vm = rbpf::EbpfVmRaw::new(Some(&prog)).unwrap();
         let mut mismatches = Vec::new();

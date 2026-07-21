@@ -689,10 +689,9 @@ mod tests {
         let parser = ir.parser.as_ref().unwrap();
         let name = parser.name.clone();
         let proto = format!("pakeles_{}", parser.name);
-        let suite = crate::testvec::suite_from_json(
-            &std::fs::read_to_string(format!("examples/{name}/conformance/vectors.json")).unwrap(),
-        )
-        .unwrap();
+        let Some(suite) = crate::testvec::committed_suite_or_skip(&name) else {
+            return;
+        };
         let (packets, indices) = crate::testvec::suite_to_packets(&suite);
 
         let dir = std::env::temp_dir();

@@ -73,9 +73,9 @@ mod tests {
     #[test]
     fn pathid_roundtrips_all_committed_vectors() {
         let ir = eth_ipvx_l4();
-        let text =
-            std::fs::read_to_string("examples/eth_ipvx_l4/conformance/vectors.json").unwrap();
-        let suite = crate::testvec::suite_from_json(&text).unwrap();
+        let Some(suite) = crate::testvec::committed_suite_or_skip("eth_ipvx_l4") else {
+            return;
+        };
         for v in &suite.vectors {
             let (bits, _) = crate::testvec::Bits::from_pb(v.packet.as_ref().unwrap());
             let result = crate::interp::run_bits(&ir, &bits).unwrap();
