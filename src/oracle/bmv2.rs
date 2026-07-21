@@ -25,6 +25,7 @@ use anyhow::{bail, Context, Result};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
+#[derive(Clone, Copy)]
 pub struct Verdict {
     pub delivered: bool,
     pub bitmap: u16,
@@ -69,18 +70,82 @@ pub fn compile(p4_src: &str, workdir: &Path) -> Result<PathBuf> {
 /// keeps the differential suite deterministic.
 static SWITCH_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-/// Run one packet through simple_switch; port 0 in, port 1 out. The
-/// verdict frame is `bm_bytes` of big-endian bitmap followed by 1 byte of
-/// parser-error code (`bm_bytes` is 1 for ≤8 instances, 2 beyond).
-pub fn run_one(json: &Path, packet: &[u8], workdir: &Path, bm_bytes: usize) -> Result<Verdict> {
+/// Decode one output frame into a `Verdict`: `bm_bytes` of big-endian
+/// bitmap followed by 1 byte of parser-error code.
+fn decode_verdict(frame: &[u8], bm_bytes: usize) -> Result<Verdict> {
+    if frame.len() < bm_bytes + 1 {
+        bail!("verdict frame too short: {} bytes", frame.len());
+    }
+    let mut bitmap: u16 = 0;
+    for &b in &frame[..bm_bytes] {
+        bitmap = (bitmap << 8) | b as u16;
+    }
+    Ok(Verdict {
+        delivered: true,
+        bitmap,
+        err: frame[bm_bytes],
+    })
+}
+
+/// Run ALL `packets` through simple_switch and return per-packet verdicts
+/// in input order. Processes in modest chunks — one spawn per chunk —
+/// amortizing the heavy cold start over CHUNK packets (vs a spawn per
+/// packet, which dominated the gate) while keeping each run small enough to
+/// finish and flush reliably under the parallel suite's CPU load: a single
+/// huge batch stalls when BMv2's internal queue fills faster than the
+/// CPU-starved deparser drains it.
+pub fn run_batch(
+    json: &Path,
+    packets: &[Vec<u8>],
+    workdir: &Path,
+    bm_bytes: usize,
+) -> Result<Vec<Verdict>> {
     let _guard = SWITCH_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    const CHUNK: usize = 32;
+    let mut out = Vec::with_capacity(packets.len());
+    for chunk in packets.chunks(CHUNK) {
+        out.extend(run_chunk(json, chunk, workdir, bm_bytes)?);
+    }
+    Ok(out)
+}
+
+/// One simple_switch spawn over a small chunk (port 0 in, port 1 out);
+/// `out[i]` is `packets[i]`'s verdict. Every packet yields exactly one
+/// output frame (the deparser always emits the verdict and ingress always
+/// sets `egress_spec`), and simple_switch preserves single-port order.
+fn run_chunk(
+    json: &Path,
+    packets: &[Vec<u8>],
+    workdir: &Path,
+    bm_bytes: usize,
+) -> Result<Vec<Verdict>> {
+    let n = packets.len();
+    let mut out = vec![
+        Verdict {
+            delivered: false,
+            bitmap: 0,
+            err: 0,
+        };
+        n
+    ];
+    if n == 0 {
+        return Ok(out);
+    }
     let dir = workdir.join("run");
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir)?;
-    crate::pcapio::write_pcap(
-        &dir.join("p0_in.pcap"),
-        std::slice::from_ref(&packet.to_vec()),
-    )?;
+    // simple_switch buffers its output pcap and only flushes as more packets
+    // arrive (it never exits under --use-files). Append a few dummy trailing
+    // packets so the chunk's real tail is flushed; their outputs land after
+    // the N we read and are ignored. Reuse a real packet as the dummy so it
+    // is guaranteed to traverse the pipeline and emit a frame.
+    const FLUSH_PAD: usize = 8;
+    let dummy = &packets[n - 1];
+    let mut input = packets.to_vec();
+    for _ in 0..FLUSH_PAD {
+        input.push(dummy.clone());
+    }
+    crate::pcapio::write_pcap(&dir.join("p0_in.pcap"), &input)?;
     crate::pcapio::write_pcap(&dir.join("p1_in.pcap"), &[])?;
     let mut child = Command::new("simple_switch")
         .args(["--use-files", "0", "-i", "0@p0", "-i", "1@p1"])
@@ -90,42 +155,54 @@ pub fn run_one(json: &Path, packet: &[u8], workdir: &Path, bm_bytes: usize) -> R
         .stderr(Stdio::null())
         .spawn()
         .context("spawning simple_switch")?;
-    // Generous: the first spawn in a fresh container (cold lib cache,
-    // parallel test threads) has been seen to need well over a second,
-    // and CI runners are slower still.
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
     let out_pcap = dir.join("p1_out.pcap");
-    let verdict = loop {
-        if let Ok(pkts) = crate::pcapio::read_packets(&out_pcap) {
-            if let Some(p) = pkts.first() {
-                if p.len() < bm_bytes + 1 {
-                    let _ = child.kill();
-                    bail!("verdict frame too short: {} bytes", p.len());
-                }
-                // Bitmap is emitted big-endian across `bm_bytes` bytes.
-                let mut bitmap: u16 = 0;
-                for &b in &p[..bm_bytes] {
-                    bitmap = (bitmap << 8) | b as u16;
-                }
-                break Verdict {
-                    delivered: true,
-                    bitmap,
-                    err: p[bm_bytes],
-                };
-            }
+    let decode_into = |pkts: &[Vec<u8>], out: &mut [Verdict]| -> Result<()> {
+        for (i, p) in pkts.iter().take(n).enumerate() {
+            out[i] = decode_verdict(p, bm_bytes)?;
         }
-        if std::time::Instant::now() > deadline {
-            break Verdict {
-                delivered: false,
-                bitmap: 0,
-                err: 0,
-            };
+        Ok(())
+    };
+    // Wait on PROGRESS (output frame count growing), not a fixed deadline:
+    // the single SWITCH_LOCK-serialized switch is CPU-starved by other tests'
+    // p4c/tshark/cc. Give up only on a real stall or a hard cap; a small
+    // chunk drains well within these even under load.
+    let stall = std::time::Duration::from_secs(30);
+    let hard_cap = std::time::Instant::now() + std::time::Duration::from_secs(120);
+    let mut seen = 0usize;
+    let mut last_progress = std::time::Instant::now();
+    loop {
+        let pkts = crate::pcapio::read_packets(&out_pcap).unwrap_or_default();
+        if pkts.len() > seen {
+            seen = pkts.len();
+            last_progress = std::time::Instant::now();
+        }
+        if pkts.len() >= n {
+            if let Err(e) = decode_into(&pkts, &mut out) {
+                let _ = child.kill();
+                return Err(e);
+            }
+            break;
+        }
+        let now = std::time::Instant::now();
+        if now > hard_cap || now.duration_since(last_progress) > stall {
+            // Stalled or capped: decode the partial chunk; any missing tail
+            // stays `delivered: false` and surfaces as a mismatch.
+            let _ = decode_into(&pkts, &mut out);
+            break;
         }
         std::thread::sleep(std::time::Duration::from_millis(25));
-    };
+    }
     let _ = child.kill();
     let _ = child.wait();
-    Ok(verdict)
+    Ok(out)
+}
+
+/// Run one packet through simple_switch (a single-element `run_batch`).
+pub fn run_one(json: &Path, packet: &[u8], workdir: &Path, bm_bytes: usize) -> Result<Verdict> {
+    Ok(run_batch(json, &[packet.to_vec()], workdir, bm_bytes)?
+        .into_iter()
+        .next()
+        .expect("run_batch yields one verdict per input packet"))
 }
 
 /// Reject reasons declared in the IR (explicit `transition reject`s).
@@ -207,14 +284,6 @@ pub struct DiffReport {
 }
 
 /// Cap on byte-aligned vectors sent through `simple_switch` per suite.
-/// Each spawn is heavy and serialized behind `SWITCH_LOCK`, so a large
-/// suite (the flow dissector has 380 byte-aligned vectors) would take
-/// many minutes. We stride-sample down to at most this many, evenly
-/// spread across the suite; the C/eBPF/Lua differentials stay exhaustive
-/// over every vector. A no-op when the suite has fewer byte-aligned
-/// vectors than the cap.
-pub const BMV2_SAMPLE_CAP: usize = 64;
-
 pub fn diff_suite(ir: &pb::Ir, suite: &tvpb::TestSuite) -> Result<DiffReport> {
     let p4 = crate::codegen::p4::generate_p4(ir)?;
     let parser = ir.parser.as_ref().context("IR has no parser")?;
@@ -224,21 +293,20 @@ pub fn diff_suite(ir: &pb::Ir, suite: &tvpb::TestSuite) -> Result<DiffReport> {
     let workdir = std::env::temp_dir().join(format!("pakeles_bmv2_{name}_{}", std::process::id()));
     let json = compile(&p4, &workdir)?;
     let (packets, indices) = crate::testvec::suite_to_packets(suite);
-    // Stride-sample the byte-aligned vectors down to `BMV2_SAMPLE_CAP`,
-    // evenly spread. `stride == 1` (small suites) leaves them all.
     let byte_aligned = indices.len();
-    let stride = byte_aligned.div_ceil(BMV2_SAMPLE_CAP).max(1);
     let mut report = DiffReport {
         compared: 0,
         skipped_bit_granular: suite.vectors.len() - byte_aligned,
         mismatches: Vec::new(),
     };
-    for (packet, &vi) in packets.iter().zip(indices.iter()).step_by(stride) {
+    // One batched simple_switch run over every byte-aligned vector — no
+    // sampling. `verdicts[i]` corresponds to `packets[i]` / `indices[i]`.
+    let verdicts = run_batch(&json, &packets, &workdir, bm_bytes)?;
+    for (got, &vi) in verdicts.iter().zip(indices.iter()) {
         let vector = &suite.vectors[vi];
         let bs = vector.packet.as_ref().context("vector has no packet")?;
         let (bits, _) = crate::testvec::Bits::from_pb(bs);
         let want = expected(ir, &bits)?;
-        let got = run_one(&json, packet, &workdir, bm_bytes)?;
         report.compared += 1;
         if !got.delivered {
             report.mismatches.push(format!(
@@ -256,8 +324,8 @@ pub fn diff_suite(ir: &pb::Ir, suite: &tvpb::TestSuite) -> Result<DiffReport> {
     }
     let _ = std::fs::remove_dir_all(&workdir);
     eprintln!(
-        "bmv2: sampled {} of {} byte-aligned vectors",
-        report.compared, byte_aligned
+        "bmv2: compared all {} byte-aligned vectors in one simple_switch run",
+        report.compared
     );
     Ok(report)
 }
@@ -325,9 +393,10 @@ mod tests {
 
     #[test]
     fn bmv2_conformance_byte_aligned_suite_flow_dissector() {
-        // The flow-dissector suite has hundreds of byte-aligned vectors;
-        // the differential stride-samples them down to `BMV2_SAMPLE_CAP`
-        // (see `diff_suite`). We still expect a full sample's worth.
-        bmv2_conformance_byte_aligned(&crate::examples::linux_flow_dissector(), 60);
+        // The flow-dissector suite has hundreds of byte-aligned vectors, now
+        // all run through ONE batched simple_switch invocation (see
+        // `run_batch`) rather than a per-vector spawn — so we exercise the
+        // whole byte-aligned set, not a sample.
+        bmv2_conformance_byte_aligned(&crate::examples::linux_flow_dissector(), 300);
     }
 }
