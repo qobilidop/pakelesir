@@ -460,11 +460,17 @@ mod gate_tests {
         let g: GoldenFile =
             serde_json::from_str(&std::fs::read_to_string(golden_path).unwrap()).unwrap();
         let report = diff_goldens(&crate::examples::linux_flow_dissector(), &g).unwrap();
+        let ok = g
+            .entries
+            .iter()
+            .filter(|e| e.disposition == Disposition::Ok)
+            .count();
+        let drop = g.entries.len() - ok;
         assert!(
-            report.compared >= 4,
-            "corpus too small: {}",
-            report.compared
+            ok >= 9 && drop >= 4,
+            "corpus shape shrank: {ok} ok / {drop} drop entries"
         );
+        assert_eq!(report.compared, g.entries.len());
         assert!(
             report.mismatches.is_empty(),
             "Pakeles disagrees with the kernel flow dissector:\n{}",

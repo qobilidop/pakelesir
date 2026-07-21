@@ -34,9 +34,9 @@ boundary — not 100% parity with every dissector quirk.
 The oracle is a **golden-diff**, not a live BPF run in the everyday gate:
 
 1. **Golden factory** (privileged, out-of-gate; [`oracle/flow_dissector/factory/`](../../oracle/flow_dissector/factory/)) —
-   the in-repo flow dissector (`flow_dissector.bpf.c`), compiled and loaded
-   as `BPF_PROG_TYPE_FLOW_DISSECTOR`, run over a packet corpus via
-   `BPF_PROG_TEST_RUN` inside the real kernel. Its output is a
+   upstream `bpf_flow.c` (Linux v6.8 selftests, fetched pinned at capture
+   time), compiled and loaded as `BPF_PROG_TYPE_FLOW_DISSECTOR`, run over a
+   packet corpus via `BPF_PROG_TEST_RUN` inside the real kernel. Its output is a
    **kernel-version-tagged** golden file, e.g.
    [`conformance/flow_keys.linux-6.8.0.golden.json`](conformance/flow_keys.linux-6.8.0.golden.json),
    making "agrees with Linux 6.8's flow dissector" a precise, reproducible
@@ -48,14 +48,16 @@ The oracle is a **golden-diff**, not a live BPF run in the everyday gate:
    compares field-for-field against the committed goldens. No BPF, no
    privilege, in the normal loop.
 
-**A note on fidelity:** rung 0's golden source is the **in-repo dissector**
-in `oracle/flow_dissector/factory/flow_dissector.bpf.c`, not (yet) upstream
-`bpf_flow.c` itself — but for the protocols rung 0 covers (eth/IPv4/IPv6
-without options or extension headers, TCP/UDP), it is written to be
-fidelity-equal to upstream's handling of that same subset. Building and
-loading the real upstream `bpf_flow.c` (tail-call prog-array, BTF/CO-RE,
-libbpf `jmp_table` population) is the rung-1 construction task; rung 0
-proves the capture mechanism and closes the loop end-to-end first.
+**A note on fidelity:** as of rung 1, the goldens are minted from
+**upstream `bpf_flow.c`** itself — the Linux v6.8 selftests source, fetched
+pinned at capture time, compiled with its tail-call prog-array and BTF/CO-RE
+`jmp_table` population, and run in-kernel via `BPF_PROG_TEST_RUN`. This is a
+strictly stronger claim than rung 0's in-repo approximation: agreement now
+covers VLAN (depth ≤ 2, following the kernel's own tag-sequencing rules) and
+MPLS (single-entry stop), *including* agreement on kernel drops (malformed
+or over-depth tag stacks), not just accepts. The rung-1 state graph — VLAN
+and MPLS states added — is regenerated at
+[`gen/graph.svg`](gen/graph.svg).
 
 Refreshing the goldens (privileged; never part of the normal gate):
 
