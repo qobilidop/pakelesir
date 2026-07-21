@@ -151,7 +151,7 @@ pub const CONFORMANCE_DIR: &str = "examples/linux_flow_dissector/conformance";
 /// Find the committed kernel-captured golden file under `dir` (filename
 /// starts with `flow_keys.linux-`). Shared by the CLI's default `--goldens`
 /// resolution and the `committed_goldens_agree` gate test.
-// TODO(rung-1): when multiple kernel-version goldens exist, diff all or
+// TODO(rung-2): when multiple kernel-version goldens exist, diff all or
 // pick/pin deterministically (find() order is unspecified).
 pub fn discover_committed_golden(dir: &std::path::Path) -> Option<std::path::PathBuf> {
     std::fs::read_dir(dir)
@@ -448,11 +448,14 @@ mod diff_tests {
 mod gate_tests {
     use super::*;
 
-    /// Rung 0's definition of done: Pakeles's projected `flow_keys` agree
+    /// Rung 1's definition of done: Pakeles's projected `flow_keys` agree
     /// with the kernel-captured goldens committed in
-    /// `examples/linux_flow_dissector/conformance/`. If this fails, that's
-    /// a real disagreement between our parse/projection and the kernel —
-    /// investigate; do NOT edit the golden file to force green.
+    /// `examples/linux_flow_dissector/conformance/` — goldens minted from
+    /// upstream `bpf_flow.c` itself, covering the full corpus including
+    /// VLAN/MPLS and agreement on kernel drops, not just accepts. If this
+    /// fails, that's a real disagreement between our parse/projection and
+    /// the kernel — investigate; do NOT edit the golden file to force
+    /// green.
     #[test]
     fn committed_goldens_agree() {
         let dir = std::path::Path::new(CONFORMANCE_DIR);

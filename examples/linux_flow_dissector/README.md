@@ -59,6 +59,24 @@ or over-depth tag stacks), not just accepts. The rung-1 state graph — VLAN
 and MPLS states added — is regenerated at
 [`gen/graph.svg`](gen/graph.svg).
 
+**Boundary of the agreement claim:** the reject⇔drop agreement above is
+proven over the committed corpus, no further. There are known divergence
+classes *outside this rung's scope* where upstream `bpf_flow.c` **accepts**
+packets this parser rejects (or parses differently) — these are deliberate
+rung boundaries, not bugs:
+
+- **Fragmented IPv4** — the kernel's `PROG(IP)` stops before port parsing
+  when `MF`/frag-off is set, returning `BPF_OK` with zero ports; this
+  parser would instead read TCP/UDP ports off fragment data or reject.
+- **IP protocols other than TCP/UDP** (e.g. ICMP) — the kernel accepts
+  with `ip_proto` set and no ports; we reject.
+- **IPv6 extension headers** (`PROG(IPV6OP)`/`PROG(IPV6FR)`) — not yet
+  modeled.
+- **GRE/IPIP encapsulation** — not yet modeled.
+
+Adding any of these as a corpus vector would make the gate legitimately
+red until a future rung models them.
+
 Refreshing the goldens (privileged; never part of the normal gate):
 
 ```sh
