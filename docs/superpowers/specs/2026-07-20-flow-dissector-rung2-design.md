@@ -1,9 +1,33 @@
 # Flow-Dissector Rung 2 Design — IPv6 Extension-Header Chain (bounded loop / header stack)
 
-**Status:** design, pending user approval → plan.
+**Status:** design — reviewed + amended 2026-07-20 (4-way adversarial review), approved → plan. See **§0 Review amendments** for the binding corrections; where §0 conflicts with a later section, §0 wins.
 **North-star:** [[flow-dissector-northstar]] — Pakeles's extracted `flow_keys` agree packet-for-packet with `bpf_flow.c` run in the Linux kernel. Rungs 0 and 1 complete+merged. This is rung 2, the ladder's designated *loop / header-stack IR milestone* — the first rung whose kernel behavior cannot be unrolled to a fixed instance count.
 
 **Predecessors:** rung-0 spec `2026-07-19-linux-flow-dissector-design.md`; rung-1 spec `2026-07-20-flow-dissector-rung1-design.md`. This doc assumes their machinery (the golden factory running upstream `bpf_flow.c@v6.8` via `BPF_PROG_TEST_RUN`, golden schema v2 with `disposition`, the harness-side `flow_keys` projection, named header instances).
+
+---
+
+## 0. Review amendments (2026-07-20, 4-way adversarial review)
+
+A four-dimension adversarial review (kernel-semantics, IR/schema, backend-feasibility, projection/corpus) validated the core thesis and surfaced corrections. **These are binding and supersede any conflicting text below.**
+
+**Thesis upheld:** "No new IR message types" is verified — the schema (`FieldWidth.byte_len` Expr, free-form transition targets), the validator (must-analysis is a top-initialized fixpoint, sound on cycles, no DAG assumption), the interpreter (`depth_bound_respected` already tests an `s→s` self-loop), and the symex engine all already support the cyclic graph, the depth bound, and the length arithmetic. The kernel-semantics model was verified against the pinned `factory/build/bpf_flow.c@v6.8` (sha256 `f01d08e6…d41a`): `thoff`/`body` arithmetic, the `frag_off:13` bit-split == `IP6_OFFSET` mask, `ip_proto` at frag-stop, and the default-flags reachability argument all check out.
+
+**BLOCKER-1 — `flow_label` byte order (corrects §4).** `struct bpf_flow_keys.flow_label` is **`__be32`** (network order), NOT host-order. The §4 analogy to `addr_proto` is wrong (`addr_proto` is host-order only because the kernel assigns it a host *constant*). `capture.c` MUST emit `ntohl(k->flow_label)`; the golden is then a logical 20-bit value ≤ `0xFFFFF`, matching the eDSL's `flow_label = bits(20)`. Found independently by two reviewers. Fix before minting v3 goldens.
+
+**DECISION — P4 is a first-class rung-2 task (corrects §5).** The review found P4 is ~10× the implied effort: `p4.rs` has an explicit `check_acyclic()` (+ lock-in test `cyclic_graph_is_rejected`) that aborts on the self-loop, AND no header-stack codegen exists even absent the guard (var-headers are split into fixed+varbit, extraction is scalar, the verdict bitmap tests scalar `.isValid()`). User decision (2026-07-20): **build the P4 header-stack emitter now** — remove/gate `check_acyclic`, emit a stack declaration, `.next` stack-advancing extraction, index-synchronized dual stacks for the fixed+varbit split of the option body, and stack-aware bitmap validity. All five backends stay provably-agreeing at rung 2. **Pipeline guard (also BLOCKER):** `gen_examples` calls `generate_p4()` with `?` for *both* examples, so the committed `linux_flow_dissector/gen/parser.p4` becomes ungeneratable the moment the self-loop lands — the P4 task must land the stack emitter (or an explicit xfail gate) atomically so example regeneration never aborts mid-rung.
+
+**CORRECTION — C/BPF/Lua/interpreter are near-free (corrects §5).** These already realize the self-loop with zero new control-flow code: the C backend is already `for (depth…) { switch(state){…} }` with `state=X; continue;` transitions; a self-loop re-enters the same case, and the single-struct *overwrite* (`out->ext_opt`) with cumulative offset advance is exactly what the projection needs. **Do NOT emit `hdr[MAX_DEPTH]` arrays** for C/BPF (§5's array framing is wrong). The "stacked-instance / reachable-from-self" analysis is a **P4-only stack-sizing** concern, not cross-backend.
+
+**SHOULD-FIX-A — projection `ip_proto` must read the LAST `ext_opt` (corrects §3).** Stacked extractions append separate `ParseResult.headers` entries; the existing `hdr()` helper uses `.find()` = *first*. A DestOpts+HopByHop+UDP chain would wrongly project `ip_proto=0` instead of `17`. The projection must read the last `ext_opt` link (and prefer `ext_frag` when present). The two-option corpus vector self-catches this — don't "fix" it by editing the golden.
+
+**SHOULD-FIX-B — conformance harnesses flatten by instance name.** The C harness (`c.rs` key→field map) and Lua harness (flat tshark JSON key) both key by `{instance}.{field}`; a repeated instance mis-compares. This is real **test-infra** work — the comparison logic, not the backends, breaks first on stacked vectors. Budget it as its own task.
+
+**SHOULD-FIX-C — `max_depth` divergence must be documented (extends §7/§8).** `depth` counts *every* state entered, so the VLAN prefix shares the budget: under QinQ, `eth(1)+vlan_ad(2)+vlan_q(3)+ipv6(4)` leaves only ~4 `ext_opt` iterations before L4. The kernel's bound is the tail-call limit (`MAX_TAIL_CALL_CNT=33`, ~30 options), so **6–~30 option headers: kernel accepts, Pakeles rejects** — a real divergence class. Do NOT add a deep-chain vector to the agreement corpus; DO document this boundary in the README + §7 (as rung 1 documented its boundaries). Set `max_depth` with explicit headroom for the QinQ+options+L4 worst case (the plan sizes it; ≥10 is the floor to fit ~5 options behind a QinQ prefix) and state it is a documented bounded-fidelity boundary regardless.
+
+**SHOULD-FIX-D — non-maskable gate (extends §4).** `diff_goldens` only compares names in the golden's `keys_subset`, so a re-mint whose `capture.c` still emits the 11-name subset would silently skip the 3 new fields and pass. Add a floor assertion that `keys_subset` contains all 14 expected names, add `flow_label`/`is_frag`/`is_first_frag` arms to `field_pair()`, and widen `capture.c`'s subset list. Note `is_frag`/`is_first_frag` are also kernel-set for **IPv4** fragments (which Pakeles doesn't model) — the corpus must stay IPv4-unfragmented; add a one-line §4 note.
+
+**Prose precision fixes.** §1's "non-TCP/UDP nexthdr at chain end rejects ⇔ kernel `BPF_DROP`" is overbroad — reword to "for protocols outside the kernel's dissected set {ICMP, IPIP, IPv6, GRE, TCP, UDP}" (ICMP/GRE/IPIP/IPv6 do NOT drop; 89/OSPF in §8 is correctly a drop). §8's truncated-option drop happens **downstream** (the next `get_header` for L4 or the next option), NOT at the option's own `get_header` (`IPV6OP` reads only the 2-byte prefix and never bounds-checks the body); net disposition still agrees both ways — wording fix only.
 
 ---
 
@@ -134,7 +158,7 @@ The stacked `ext_opt` instances contribute only cumulative `thoff` advancement a
 
 Add three fields to `FlowKeys` and to `keys_subset`: `flow_label: u32`, `is_frag: bool`, `is_first_frag: bool`. All `#[serde(default)]` so v2 goldens (which lack them) still parse — the gate stays green until re-mint. `diff_goldens` compares the new fields on `ok` entries exactly as it does the others; the two-sided disposition check is unchanged.
 
-`capture.c` emits the three fields from the kernel `struct bpf_flow_keys` (which already carries them): `flow_label` is host-order `__u32` (like `addr_proto` — no `ntohs`, per the rung-1 fix), `is_frag`/`is_first_frag` are `__u8` booleans printed as JSON `true`/`false`. `keys_subset` grows to 14 names.
+`capture.c` emits the three fields from the kernel `struct bpf_flow_keys` (which already carries them): `flow_label` is **`__be32` (network order) → emit `ntohl(k->flow_label)`** (see §0 BLOCKER-1 — it is NOT host-order like `addr_proto`; the golden is then a logical 20-bit value ≤ `0xFFFFF`), `is_frag`/`is_first_frag` are `__u8` booleans printed as JSON `true`/`false`. `keys_subset` grows to 14 names, and the gate asserts all 14 are present (§0 SHOULD-FIX-D). Note: `is_frag`/`is_first_frag` are kernel-set for IPv4 fragments too, which Pakeles does not model — the corpus must stay IPv4-unfragmented.
 
 The gate test `committed_goldens_agree` keeps its shape floor, updated for the rung-2 corpus (§8).
 
@@ -196,12 +220,13 @@ Pakeles agrees with upstream `bpf_flow.c@v6.8`, in-kernel, on the full rung-0+1+
 
 ## 10. Task decomposition (preview for the plan)
 
-Roughly, in dependency order (the plan will detail each with TDD steps):
+Rewritten post-review to reflect the true effort allocation (§0). In dependency order (the plan details each with TDD steps); effort tags: **[S]** small, **[M]** medium, **[L]** large.
 
-1. eDSL `var_bytes(expr)` — length-expression affordance + tests.
-2. Golden schema v3 — `flow_label`/`is_frag`/`is_first_frag`, serde-defaulted; diff covers them.
-3. Example gains `IPv6ExtOpt`/`IPv6Frag` + the three IPv6-chain states (self-loop), `max_depth = 8`; regenerate.
-4. Interpreter + validator: cyclic-graph support, stacked-instance detection, iteration bound.
-5. Projection: IPv6-chain `flow_keys` (`thoff` through options, `ip_proto` chain-follow, frag/flow_label fields).
-6. Backend loop/header-stack realization (C, BPF, Lua, P4/bmv2) — driven by the existing dual-example conformance suites; fix what breaks minimally.
-7. Factory: `capture.c` emits v3 fields; corpus grows (drop-aware); privileged re-mint; cross-validate; tighten gate; README fidelity update.
+1. **[S] eDSL `var_bytes(expr)`** — length-*expression* affordance + tests. Note the Rust builder already accepts an arbitrary `Expr` (`builder.rs`); only the Python surface is new.
+2. **[S] Golden schema v3** — add `flow_label:u32`/`is_frag:bool`/`is_first_frag:bool`, `#[serde(default)]`; add `field_pair()` arms; **assert `keys_subset` ⊇ the 14 names** (§0 SHOULD-FIX-D).
+3. **[M] Example + validator** — `IPv6ExtOpt`/`IPv6Frag` + the three IPv6-chain states (self-loop); size `max_depth` for the QinQ+options+L4 worst case (§0 SHOULD-FIX-C, ≥10 floor); regenerate. Interpreter/validator already handle cycles + the depth bound (verified) — this is mostly authoring + confirming, not new engine code.
+4. **[M] Projection** — IPv6-chain `flow_keys`: `thoff` through options, **`ip_proto` reads the LAST `ext_opt`** (§0 SHOULD-FIX-A, not the first-match helper), `is_frag`/`is_first_frag`, `flow_label`.
+5. **[S] C / BPF / Lua realization** — verify the existing bounded dispatch loop + single-struct overwrite already produce correct results (§0 correction: **no array codegen**); the only new work is the Lua byte-align check on the option body (holds for `IPv6ExtOpt`).
+6. **[M] Conformance test-infra** — make the C and Lua harness comparison logic stack-aware (§0 SHOULD-FIX-B); this breaks before the backends do on stacked vectors.
+7. **[L] P4/bmv2 header-stack emitter** (first-class, §0 DECISION) — remove/gate `check_acyclic` + its lock-in test; emit stack declaration; `.next` stack-advancing extraction; index-synchronized fixed+varbit dual stacks for the option body; stack-aware bitmap validity; **gate `gen_examples` so a cyclic example never aborts regeneration**. The one surviving §5 claim: a stack counts as 1 against the 8-instance verdict-bitmap cap.
+8. **[M] Factory + corpus + docs** — `capture.c` emits v3 fields (**`ntohl` on `flow_label`**, §0 BLOCKER-1) + 14-name subset; corpus grows (drop-aware, §8); privileged re-mint; cross-validate; tighten gate shape floor; **README fidelity update covers BOTH the default-flags boundary AND the `max_depth`-vs-tail-call divergence** (§0 SHOULD-FIX-C).
